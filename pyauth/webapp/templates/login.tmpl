@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link href={{ url_for('static', filename='bootstrap.css') }} rel="stylesheet">
+</head>
+
+<body>
+<div class="container">
+  <div class="row">
+    <div class="col-md">
+
+      <h1>Login</h1>
+      <form id="login-form" action="/login" method="POST" class="form-horizontal">
+        <div class="form-group">
+          <label for="inputEmail">Username</label>
+          <input name="username" type="text" class="form-control" id="inputEmail" placeholder="Username" minlength="4" placeholder="" required >
+        </div>
+
+        <div class="form-group">
+          <label for="inputPassword">Password</label>
+          <input name="password" type="password" class="form-control" id="inputPassword" placeholder="Password" minlength="1" required>
+        </div>
+
+        <div class="form-group">
+          <div class="row">
+            <div class="col-2">
+              <button type="submit" class="btn btn-primary">Sign in</button>
+            </div>
+            <div class="col-8">
+              <button id="passwordreset-btn" type="button" class="btn btn-link">Forgotten Password?</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md">
+      <hr>
+      <button data-toggle="modal" data-target="#modal-newuser" type="button" class="btn btn-link">Create an account</button>
+    </div>
+  </div>
+</div>
+   
+
+
+  <!-- New User Modal -->
+  <div id="modal-newuser" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">New User Details</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <form id="newuser-form">
+            <div class="form-group">
+              <label for="newuserEmail">eMail Address</label>
+              <input type="text" class="form-control" id="newuserEmail" placeholder="name@domain.a">
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button id="newusersubmit-btn" type="button" class="btn btn-primary">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- New User Result Modal -->
+  <div id="modal-newuserresult" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div id="newuser-result" class="modal-body">
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Password Reset Modal -->
+  <div id="modal-passwordreset" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body" id="reset-confirm">
+        </div>
+
+        <div class="modal-footer">
+          <button id="resetsend-btn" type="button" class="btn btn-primary">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Reset Result Modal -->
+  <div id="modal-resetresult" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div id="reset-result" class="modal-body">
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Bootstrap JavaScript & JQuery -->
+  <script src={{ url_for('static', filename='jquery.js') }}></script>
+  <script src={{ url_for('static', filename='bootstrap.js') }}></script>
+
+
+  <script>
+  $("#newusersubmit-btn").click(function(){
+    var email = $("#newuserEmail").val();
+
+    var check_result = $.ajax({
+            url: "https://{{ api_url }}:5000/api/v1/users/new",
+            type: "POST",
+            contentType:"application/json; charset=utf-8",
+            dataType:"json",
+            data: JSON.stringify({"email": email}),
+            success: function (result){
+              $("#modal-newuser").modal('hide');
+              $("#newuser-form").trigger('reset');
+              $("#modal-newuser").modal('dispose');
+              $("#newuser-result").append('<div id="newuser-result" class="alert alert-success">Account for ' + email + ' created.</div>');
+              $("#modal-newuserresult").modal('show');
+            },
+            error: function (result){
+              $("#modal-newuser").modal('hide');
+              $("#newuser-form").trigger('reset');
+              $("#modal-newuser").modal('dispose');
+              $("#newuser-result").append('<div id="newuser-result" class="alert alert-danger">Could not create an account for ' + email + '</div>');
+              $("#modal-newuserresult").modal('show');
+            }
+    });
+  })
+
+
+  $("#passwordreset-btn").click(function(){
+      var email= $("#inputEmail").val();
+      $("#reset-confirm").empty();
+      $("#reset-confirm").append('<p>Are you sure you want to reset the password for ' + email + '?</p>');
+      $("#modal-passwordreset").modal('show');
+    })
+    
+
+  $("#resetsend-btn").click(function(){
+    var email= $("#inputEmail").val();
+    var check_result = $.ajax({
+            url: "https://{{ api_url }}:5000/api/v1/users/reset",
+            type: "POST",
+            contentType:"application/json; charset=utf-8",
+            dataType:"json",
+            data: JSON.stringify({"email": email}),
+            success: function (result){
+              $("#modal-passwordreset").modal('hide');
+              $("#login-form").trigger('reset');
+              $("#modal-passwordreset").modal('dispose');
+              $("#reset-result").append('<div class="alert alert-success">Reset confirmation sent to ' + email + '.</div>');
+              $("#modal-resetresult").modal('show');
+            },
+            error: function (result){
+              $("#modal-passwordreset").modal('hide');
+              $("#login-form").trigger('reset');
+              $("#modal-passwordreset").modal('dispose');
+              $("#reset-result").append('<div class="alert alert-danger">Could not reset password for ' + email + '.</div>');
+              $("#modal-resetresult").modal('show');
+            }
+      });
+  })
+
+
+  $('#modal-resetresult').on('hidden.bs.modal', function(e) {
+    $("#reset-result").empty() 
+  })
+
+  $('#modal-newuserresult').on('hidden.bs.modal', function(e) {
+    $("#newuser-result").empty() 
+  })
+  
+
+
+
+  </script>
+
+
+    
+</body>
+</html>
+

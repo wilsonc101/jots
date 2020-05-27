@@ -1,0 +1,45 @@
+<html>
+<head>
+  <!-- Bootstrap core CSS -->
+  <link href={{ url_for('static', filename='bootstrap.css') }} rel="stylesheet">
+</head>
+
+<body>
+  <a href="https://{{ api_url }}:5000/logout">Logout</a>
+
+  <!-- Bootstrap JavaScript & JQuery -->
+  <script src={{ url_for('static', filename='jquery.js') }}></script>
+  <script src={{ url_for('static', filename='bootstrap.js') }}></script>
+
+  <script>
+    $(document).ready(function(){
+      // GET PROCESSORS
+      $.ajax({url: "https://{{ api_url }}:5000/api",
+              type: "GET",
+              success: function (result){      
+                console.log("ok");
+                console.log(result);
+                },
+              error: function (result){      
+                console.log("error");
+                console.log(result);
+                }
+              });
+    })
+  </script>
+
+</body> 
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+        

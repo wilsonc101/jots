@@ -1,0 +1,185 @@
+<html>
+<head>
+  <!-- Bootstrap core CSS -->
+  <link href={{ url_for('static', filename='bootstrap.css') }} rel="stylesheet">
+</head>
+
+<body>
+  <a href="https://{{ api_url }}:5000/logout">Logout</a>
+  <div class="container">
+    <div class="pt-2 tab-pane" id="resultstab">
+      <div class="row">
+        <div class="col-md">
+          <h3>Admin - Group Management</h3>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md">
+          <div class="input-group">
+            <input type="text" class="form-control mr-2" id="search-groupname"> 
+            <button class="btn btn-primary mb-2" id="search-btn">Search</button>
+          </div>
+        </div>
+        <div class="col-md" id="search-query-error">
+          <p>PUT SEARCH ERRORS HERE</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Group Name</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="results-table">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Group Edit Modal -->
+  <div id="modal-groupedit" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="title-groupedit"></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Email Address</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="members-table">
+            </tbody>
+          </table>
+        </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="groupedit-btn" type="button" class="btn btn-primary">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+</body>
+</html>
+
+
+
+
+  <!-- Bootstrap JavaScript & JQuery -->
+  <script src={{ url_for('static', filename='jquery.js') }}></script>
+  <script src={{ url_for('static', filename='bootstrap.js') }}></script>
+
+  <script>
+    function getCookie(name) {
+      var value = "; " + document.cookie;
+      var parts = value.split("; " + name + "=");
+      if (parts.length == 2) return parts.pop().split(";").shift();
+    }
+
+    $("#search-btn").click(function(){
+      var group_name = $("#search-groupname").val();
+      $("#results-table").empty()
+      var check_result = $.ajax({
+              url: "https://{{ api_url }}:5000/api/v1/groups/find",
+              type: "POST",
+              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
+              contentType:"application/json; charset=utf-8",
+              dataType:"json",
+              data: JSON.stringify({"groupname": group_name}),
+              success: function (result){
+                for (var key in result) {
+                  if (result.hasOwnProperty(key)) {           
+                    $("#results-table").append('<tr class="table-light">' + 
+                      '<td>' + key + '</td>' + 
+                      '<td><button class="btn btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-groupedit" data-groupname="' + key + '" data-groupid="' + result[key] + '">Edit</button>' +
+                      '<button class="btn btn-primary mr-2">B</button>' +
+                      '<button class="btn btn-primary">C</button>' +
+                      '</td></tr>')
+                   console.log(key, result[key]);
+                  }
+                }
+              },
+              error: function (result){
+                console.log(result);
+              }
+      });
+    })
+
+
+    $('#modal-groupedit').on('show.bs.modal', function(e) {
+      var group_id = e.relatedTarget.dataset.groupid;
+      var group_name = e.relatedTarget.dataset.groupname;
+      $('#title-groupedit').html("Edit Group - " + group_name)
+
+      var check_result = $.ajax({
+              url: "https://{{ api_url }}:5000/api/v1/groups/" + group_id  + "/members",
+              type: "GET",
+              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
+              success: function (result){
+                for (var key in result) {
+                  if (result.hasOwnProperty(key)) {           
+                    $("#members-table").append('<tr class="table-light">' + 
+                      '<td>' + result[key] + '</td>' + 
+                      '<td><button class="btn btn-sm btn-outline-primary mr-2" onclick="delete_member(this);" data-userid="' + key + '">Delete</button>' +
+                      '</td></tr>')
+                   console.log(key, result[key]);
+                  }
+                }
+              },
+              error: function (result){
+                console.log(result);
+              }
+      });
+    })
+
+    $('#modal-groupedit').on('hidden.bs.modal', function(e) {
+      $("#members-table").empty()
+    })
+
+   function delete_member(button) {
+     var user_id = $(button).data("userid");
+     console.log(user_id);
+     // POST user_id
+     // Reponse will have new list
+     // Update user table
+   }
+
+  </script>
+
+</body> 
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+        

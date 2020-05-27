@@ -1,0 +1,264 @@
+import uuid
+
+from pyauth import mongo
+#import mongo
+
+class Error(Exception):
+  pass
+
+class InputError(Error):
+  def __init__(self, expression, message):
+    self.expression = expression
+    self.message = message
+
+class GroupActionError(Error):
+  def __init__(self, expression, message):
+    self.expression = expression
+    self.message = message
+
+class GroupPropertyError(Error):
+  def __init__(self, expression, message):
+    self.expression = expression
+    self.message = message
+
+class GroupNotFound(Error):
+  def __init__(self, expression, message):
+    self.expression = expression
+    self.message = message
+
+
+class group_properties(object):
+  ''' Readonly container for user properties
+  '''
+  def __init__(self, group_doc):
+    for key in group_doc.keys():
+      self.__dict__[key] = group_doc[key]
+
+  def __setattr__(self, name, value):
+    raise GroupPropertyError("set property", "group properties are read-only, use update methods")
+
+
+class group(object):
+  def __init__(self, group_name=None, group_id=None):
+    if group_name is None and group_id is None:
+      raise InputError("group", "one unique identifier must be provided - name, groupid")
+
+    if group_name is not None:
+      _check_user_string(group_name)
+      group_details = mongo.get_group_by_name(group_name)
+      if group_details is None:
+        raise GroupNotFound("group", "group not found")
+
+    elif group_id is not None:
+      _check_user_string(group_id)
+      group_details = mongo.get_group_by_id(group_id)
+      if group_details is None:
+        raise GroupNotFound("group", "group not found")
+
+    # Drop Mongo doc ID before setting properties
+    if "_id" in group_details:
+      del group_details['_id']
+
+    self.properties = group_properties(group_details)
+
+
+  def add_member(self, user_id=None, email=None):
+    if user_id is None and email is None:
+      raise InputError("group member", "one unique identifier must be provided - user id, email address")
+
+    if user_id is not None:
+      # Check user is real
+      _check_user_string(user_id, is_uuid=True)
+
+      user_details = mongo.get_user_by_id(user_id)
+      if user_details is None:
+        raise GroupActionError("group member", "user not found, can't be added")
+
+    elif email is not None:
+      _check_user_string(email)
+
+      user_details = mongo.get_user_by_email(email)
+      if user_details is None:
+        raise GroupActionError("group member", "user not found, can't be added")
+
+    if user_details['userId'] in self.properties.members:
+      raise GroupActionError("group member", "user already in group")
+
+    members_list = self.properties.members.copy()
+    members_list.append(user_details['userId'])
+    result = self.update(members=members_list)
+
+    return result
+
+
+  def get_members_detail(self, attribute=None):
+    ''' Iterate group member list
+        Get user document
+        Returns named attribute or whole document if not given
+    '''
+    if attribute is not None:
+      if not isinstance(attribute, str):
+        raise InputError("group member", "attribute must be a string")
+      _check_user_string(attribute)
+
+    user_details = dict()
+    for user_id in self.properties.members:
+      try:
+        user_doc = mongo.get_user_by_id(user_id)
+        if user_doc is None:
+          raise GroupActionError("group member", "could not get details, user does not exist")
+      except mongo.RecordError as err:
+        raise GroupActionError("group member", err.message)
+
+      if attribute is not None:
+        if attribute in user_doc:
+          user_details[user_id] = user_doc[attribute]
+        else:
+          user_details[user_id] = str()
+      else:
+        # Drop Mongo doc ID before setting properties
+        if "_id" in user_doc:
+          del user_doc['_id']
+
+        user_details[user_id] = user_doc
+
+    return user_details
+
+
+  def remove_member(self, user_id=None, email=None, force=False):
+    ''' Remove user from group member list
+        Forcing allows the removal of user, by id, from member list
+        regardless if they exist or not. This is to handle non-existent users
+        where their details cannot be looked-up (i.e. email address will not be usable)
+    '''
+    if user_id is None and email is None:
+      raise InputError("group member", "one unique identifier must be provided - user id, email address")
+
+    if force and user_id is None:
+      raise InputError("group member", "to forcefully remove a user, user id must be provided")
+
+    if user_id is not None:
+      _check_user_string(user_id, is_uuid=True)
+
+      if not force:
+        # If forcing, don't check for a valid user
+        user_details = mongo.get_user_by_id(user_id)
+        if user_details is None:
+          raise GroupActionError("group member", "user not found, can't be removed")
+        user_id = user_details['userId']
+
+    elif email is not None:
+      _check_user_string(email)
+
+      user_details = mongo.get_user_by_email(email)
+      if user_details is None:
+        raise GroupActionError("group member", "user not found, can't be removed")
+      user_id = user_details['userId']
+
+    if user_id not in self.properties.members:
+      raise GroupActionError("group member", "user not in group")
+
+    members_list = self.properties.members.copy()
+    members_list.remove(user_id)
+    result = self.update(members=members_list)
+
+    return result
+
+
+  def update(self, **kwargs):
+    ''' Takes kwargs, converts to dict
+        Updates mongo and local properties object if OK
+    '''
+    if len(kwargs.items()) < 1:
+      raise InputError("update group", "no updates given")
+
+    group_fields = dict()
+    for key, value in kwargs.items():
+      _check_user_string(key)
+      _check_user_string(value)
+      group_fields[key] = value
+
+    updated_doc = mongo.update_group(self.properties.groupId, group_fields)
+
+    if updated_doc is None:
+      raise GroupActionError("update group", "no group document found to update")
+    else:
+      # Drop Mongo doc ID  before setting properties
+      if "_id" in updated_doc:
+        del updated_doc['_id']
+      self.properties = group_properties(updated_doc)
+
+    return True
+
+
+def _check_user_string(user_string, is_uuid=False):
+  # TODO - if string contains illegal chars, raise error
+
+  # If string can't be converted to a UUID, raise error
+  if is_uuid:
+    try:
+      uuid.UUID(user_string)
+    except ValueError:
+      raise InputError("group", "invalid user id given")
+
+  return True
+
+
+def create_group(group_name, group_members=[]):
+  ''' Requires a name
+      Members must be given by their ID (uuid)
+      Returns group ID
+  '''
+  if not group_name:
+    raise InputError("group", "group name not given")
+
+  _check_user_string(group_name)
+
+  if not isinstance(group_members, list):
+    raise InputError("group", "members must be in a list")
+
+  # Check each member ID for illegal chars and that it's a valid uuid
+  for member_id in group_members:
+    _check_user_string(member_id, is_uuid=True)
+
+  group_id = str(uuid.uuid4())
+
+  group_fields = {"groupName": group_name,
+                  "groupId": group_id,
+                  "members": group_members}
+
+  try:
+    doc_id = mongo.create_group(group_fields)
+    return group_id
+
+  except mongo.DuplicateGroup:
+      raise GroupActionError("group", "group already exists")
+
+
+def find_groups_like(group_name):
+  if not group_name:
+    raise InputError("group", "group name not given")
+
+  _check_user_string(group_name)
+
+  groups = mongo.find_groups_by_name(group_name)
+
+  if len(groups) == 0:
+    raise GroupNotFound("find group", "no groups found")
+
+  # Repack tuples for easier javascript iteration
+  group_data = dict()
+  for group_id, group_name in groups:
+    group_data[group_name] = group_id
+
+  return group_data
+
+
+if __name__ == "__main__":
+#  gid = create_group("admin", ['cd7e1b52-8e10-4055-a5c8-f429682ee546'])
+#  print(gid)
+  gid = "9c558ca4-0092-4043-8136-6a08c3f41f81"
+  g_obj = group(group_id=gid)
+  print(g_obj.properties.members)
+  dets = g_obj.get_members_detail(attribute="email")
+  print(dets)
