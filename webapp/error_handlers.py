@@ -24,7 +24,7 @@ def handle_invalid_usage(error):
   return render_template("error.tmpl",
                          error_message=error.message,
                          error_code=error.status_code,
-                         error_data=error.payload)
+                         error_data=error.payload), int(error.status_code)
 
 
 @jwt.expired_token_loader

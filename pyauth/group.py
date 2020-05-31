@@ -1,3 +1,4 @@
+
 import uuid
 
 from pyauth import mongo
@@ -87,8 +88,8 @@ class group(object):
     members_list = self.properties.members.copy()
     members_list.append(user_details['userId'])
     result = self.update(members=members_list)
-
-    return result
+    if result:
+      return members_list
 
 
   def get_members_detail(self, attribute=None):
@@ -161,8 +162,8 @@ class group(object):
     members_list = self.properties.members.copy()
     members_list.remove(user_id)
     result = self.update(members=members_list)
-
-    return result
+    if result:
+      return members_list
 
 
   def update(self, **kwargs):

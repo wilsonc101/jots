@@ -65,26 +65,36 @@ def api_findgroups():
     return jsonify(dict())
 
 
+@app.route('/api/v1/groups/new', methods=['POST'])
+@jwt_required
+def api_newgroup():
+  pass
+
+@app.route('/api/v1/groups/<group_id>/delete', methods=['POST'])
+@jwt_required
+def api_deletegroup():
+  pass
+
+
 @app.route('/api/v1/groups/<group_id>/members')
 @jwt_required
 def api_groupmembers(group_id):
   group_id = html.escape(group_id)
 
   username = get_jwt_identity()
-  user = pyauth.user.user(email_address=username)
-  _check_group_permission("admin", user.properties.userId)
+  try:
+    user = pyauth.user.user(email_address=username)
+  except pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
 
   try:
     group = pyauth.group.group(group_id=group_id)
     group_members_with_email = group.get_members_detail(attribute="email")
     return jsonify(group_members_with_email)
-
   except pyauth.group.GroupNotFound:
     return jsonify(dict())
-
   except pyauth.group.GroupActionError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
-
   except pyauth.group.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
@@ -92,13 +102,59 @@ def api_groupmembers(group_id):
 @app.route('/api/v1/groups/<group_id>/members/add', methods=['POST'])
 @jwt_required
 def api_groupmember_add(group_id):
-  pass
+  group_id = html.escape(group_id)
+
+  username = get_jwt_identity()
+  try:
+    user = pyauth.user.user(email_address=username)
+  except pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
+
+  _check_group_permission("admin", user.properties.userId)
+
+  # Reject non-JSON payload
+  if not request.json:
+    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+
+  request_content = request.get_json()
+  if 'email' not in request_content:
+    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+
+  email = html.escape(request_content['email'])
+  try:
+    group = pyauth.group.group(group_id=group_id)
+    new_member_list = group.add_member(email=email)
+  except pyauth.group.GroupNotFound:
+    raise error_handlers.InvalidUsage("group not found", status_code=400)
+  except pyauth.group.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+  except pyauth.group.GroupActionError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+  try:
+    new_member_list = group.get_members_detail(attribute="email")
+    return jsonify(new_member_list)
+  except pyauth.group.GroupActionError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+  except pyauth.group.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+
+
 
 
 @app.route('/api/v1/groups/<group_id>/members/remove', methods=['POST'])
 @jwt_required
 def api_groupmember_remove(group_id):
   group_id = html.escape(group_id)
+
+  username = get_jwt_identity()
+  try:
+    user = pyauth.user.user(email_address=username)
+  except pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
+
+  _check_group_permission("admin", user.properties.userId)
 
   # Reject non-JSON payload
   if not request.json:
@@ -110,7 +166,22 @@ def api_groupmember_remove(group_id):
 
   user_id = html.escape(request_content['userid'])
 
-  # DELETE MEMBER
-  # RETURN UPDATED USER LIST
+  try:
+    group = pyauth.group.group(group_id=group_id)
+    new_member_list = group.remove_member(user_id=user_id)
+  except pyauth.group.GroupNotFound:
+    raise error_handlers.InvalidUsage("group not found", status_code=400)
+  except pyauth.group.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+  except pyauth.group.GroupActionError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
 
-  pass
+  try:
+    new_member_list = group.get_members_detail(attribute="email")
+    return jsonify(new_member_list)
+  except pyauth.group.GroupActionError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+  except pyauth.group.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+

@@ -17,11 +17,11 @@
         <div class="col-md">
           <div class="input-group">
             <input type="text" class="form-control mr-2" id="search-groupname"> 
-            <button class="btn btn-primary mb-2" id="search-btn">Search</button>
+            <button class="btn btn-primary mb-2 mr-2" id="search-btn">Search</button>
+            <button class="btn btn-secondary mb-2" id="create-btn" data-toggle="modal" data-target="#modal-groupcreate">Create</button>
           </div>
         </div>
         <div class="col-md" id="search-query-error">
-          <p>PUT SEARCH ERRORS HERE</p>
         </div>
       </div>
 
@@ -42,7 +42,42 @@
     </div>
   </div>
 
+  <div id="page-alerts">
+  </div>
 
+  <!-- Group Create  Modal -->
+  <div id="modal-groupcreate" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">New Group</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md">
+              <div id="creategroup-modal-alerts">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md">
+              <div class="input-group">
+                <input type="text" class="form-control mr-2" id="groupcreate-name"> 
+                <button class="btn btn-primary mb-2" id="groupcreate-add-btn">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  
   <!-- Group Edit Modal -->
   <div id="modal-groupedit" class="modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -56,34 +91,49 @@
         </div>
 
         <div class="modal-body">
-        <div class="table-responsive">
-          <table class="table">
-            <thead>
-              <tr>
-                <th scope="col">Email Address</th>
-                <th scope="col">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="members-table">
-            </tbody>
-          </table>
-        </div>
+          <div class="row">
+            <div class="col-md">
+              <div id="editgroup-modal-alerts">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md">
+              <h6>Find/Add Member</h6>
+              <div class="input-group">
+                <input type="text" class="form-control mr-2" id="groupedit-add-email" placeholder="email address"> 
+                <input type="hidden" class="form-control mr-2" id="groupedit-add-groupid"> 
+                <button class="btn btn-primary mb-2" id="groupedit-add-btn">Add</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md mb-2">
+              <hr>
+              <h6>Current Members</h6>
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th scope="col">Email Address</th>
+                      <th scope="col">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="members-table">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="modal-footer">
-          <button id="groupedit-btn" type="button" class="btn btn-primary">Submit</button>
         </div>
       </div>
     </div>
   </div>
-
-
-
-
-
-</body>
-</html>
-
 
 
 
@@ -113,15 +163,21 @@
                   if (result.hasOwnProperty(key)) {           
                     $("#results-table").append('<tr class="table-light">' + 
                       '<td>' + key + '</td>' + 
-                      '<td><button class="btn btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-groupedit" data-groupname="' + key + '" data-groupid="' + result[key] + '">Edit</button>' +
-                      '<button class="btn btn-primary mr-2">B</button>' +
-                      '<button class="btn btn-primary">C</button>' +
+                      '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-groupedit" data-groupname="' + key + '" data-groupid="' + result[key] + '">Edit</button>' +
+                      '<button class="btn btn-sm btn-outline-danger mr-2" onclick="delete_group(this);" data-groupid="' + result[key] + '">Delete</button>' +
                       '</td></tr>')
-                   console.log(key, result[key]);
                   }
                 }
               },
               error: function (result){
+                $("#page-alerts").empty()
+                $("#page-alerts").append('<div id="ajax-page-error" class="alert alert-danger" role="alert">' +
+                                           'Could not find group - ' + group_name +
+                                           '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                                           '<span aria-hidden="true">&times;</span>' +
+                                           '</button>' +
+                                           '</div>')
+                $("#ajax-page-error").alert()
                 console.log(result);
               }
       });
@@ -131,7 +187,8 @@
     $('#modal-groupedit').on('show.bs.modal', function(e) {
       var group_id = e.relatedTarget.dataset.groupid;
       var group_name = e.relatedTarget.dataset.groupname;
-      $('#title-groupedit').html("Edit Group - " + group_name)
+      $('#title-groupedit').html("Edit group - " + group_name);
+      $('#groupedit-add-groupid').val(group_id);
 
       var check_result = $.ajax({
               url: "https://{{ api_url }}:5000/api/v1/groups/" + group_id  + "/members",
@@ -142,29 +199,138 @@
                   if (result.hasOwnProperty(key)) {           
                     $("#members-table").append('<tr class="table-light">' + 
                       '<td>' + result[key] + '</td>' + 
-                      '<td><button class="btn btn-sm btn-outline-primary mr-2" onclick="delete_member(this);" data-userid="' + key + '">Delete</button>' +
+                      '<td><button class="btn btn-sm btn-outline-primary mr-2" onclick="delete_member(this);" data-groupid="' + group_id + '" data-userid="' + key + '">Delete</button>' +
                       '</td></tr>')
-                   console.log(key, result[key]);
                   }
                 }
               },
               error: function (result){
+                $("#editgroup-modal-alerts").empty()
+                $("#editgroup-modal-alerts").append('<div id="ajax-modal-error" class="alert alert-danger" role="alert">' +
+                                           'Could not get members for group - ' + group_name +
+                                           '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                                           '<span aria-hidden="true">&times;</span>' +
+                                           '</button>' +
+                                           '</div>')
+                $("#ajax-modal-error").alert()
                 console.log(result);
               }
       });
     })
 
     $('#modal-groupedit').on('hidden.bs.modal', function(e) {
-      $("#members-table").empty()
+      $("#members-table").empty();
     })
 
-   function delete_member(button) {
-     var user_id = $(button).data("userid");
-     console.log(user_id);
-     // POST user_id
-     // Reponse will have new list
-     // Update user table
-   }
+    function delete_member(button) {
+      var user_id = $(button).data("userid");
+      var group_id = $(button).data("groupid");
+
+      var check_result = $.ajax({
+              url: "https://{{ api_url }}:5000/api/v1/groups/" + group_id + "/members/remove",
+              type: "POST",
+              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
+              contentType:"application/json; charset=utf-8",
+              dataType:"json",
+              data: JSON.stringify({"userid": user_id}),
+              success: function (result){
+                  $("#members-table").empty()
+                  for (var key in result) {
+                    if (result.hasOwnProperty(key)) {           
+                      $("#members-table").append('<tr class="table-light">' + 
+                        '<td>' + result[key] + '</td>' + 
+                        '<td><button class="btn btn-sm btn-outline-primary mr-2" onclick="delete_member(this);" data-groupid="' + group_id + '" data-userid="' + key + '">Delete</button>' +
+                        '</td></tr>')
+                    }
+                  }
+              },
+              error: function (result){
+                $("#editgroup-modal-alerts").empty()
+                $("#editgroup-modal-alerts").append('<div id="ajax-modal-error" class="alert alert-danger" role="alert">' +
+                                           'Could not delete user -  ' + user_id +
+                                           '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                                           '<span aria-hidden="true">&times;</span>' +
+                                           '</button>' +
+                                           '</div>')
+                $("#ajax-modal-error").alert()
+                console.log(result);
+              }
+      });
+    }
+
+    $("#groupedit-add-btn").click(function(){
+      var email = $("#groupedit-add-email").val();
+      var group_id = $('#groupedit-add-groupid').val();
+
+      var check_result = $.ajax({
+              url: "https://{{ api_url }}:5000/api/v1/groups/" + group_id + "/members/add",
+              type: "POST",
+              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
+              contentType:"application/json; charset=utf-8",
+              dataType:"json",
+              data: JSON.stringify({"email": email}),
+              success: function (result){
+                  $("#members-table").empty()
+                  for (var key in result) {
+                    if (result.hasOwnProperty(key)) {
+                      $("#members-table").append('<tr class="table-light">' +
+                        '<td>' + result[key] + '</td>' +
+                        '<td><button class="btn btn-sm btn-outline-primary mr-2" onclick="delete_member(this);" data-groupid="' + group_id + '" data-userid="' + key + '">Delete</button>' +
+                        '</td></tr>')
+                    }
+                  }
+
+              },
+              error: function (result){
+                $("#editgroup-modal-alerts").empty()
+                $("#editgroup-modal-alerts").append('<div id="ajax-modal-error" class="alert alert-danger" role="alert">' +
+                                           'Could not add user -  ' + email +
+                                           '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                                           '<span aria-hidden="true">&times;</span>' +
+                                           '</button>' +
+                                           '</div>')
+                $("#ajax-modal-error").alert()
+                console.log(result);
+              }
+      });
+    })
+
+    $('#modal-groupedit').on('hidden.bs.modal', function(e) {
+      $("#groupedit-add-email").val("");
+      $("#ajax-modal-error").alert('close');
+
+    })
+
+
+    $("#groupcreate-add-btn").click(function(){
+      var group_name = $("#groupcreate-name").val();
+      console.log("create - " + group_name);
+
+                $("#creategroup-modal-alerts").empty()
+                $("#creategroup-modal-alerts").append('<div id="ajax-modal-error" class="alert alert-danger" role="alert">' +
+                                           'Could not create group -  ' + group_name +
+                                           '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                                           '<span aria-hidden="true">&times;</span>' +
+                                           '</button>' +
+                                           '</div>')
+                $("#ajax-modal-error").alert()
+                console.log("");
+
+    })
+
+
+    $('#modal-groupcreate').on('hidden.bs.modal', function(e) {
+      $("#groupcreate-name").val("");
+      $("#ajax-modal-error").alert('close');
+    })
+
+
+    function delete_group(button) {
+      var group_id = $(button).data("groupid");
+      console.log("delete - " + group_id);
+    }
+
+
 
   </script>
 

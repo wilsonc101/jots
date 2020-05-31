@@ -7,6 +7,8 @@ import string
 
 from pyauth import mongo
 
+# TODO - Add UUID check in user string method
+
 class Error(Exception):
   pass
 
