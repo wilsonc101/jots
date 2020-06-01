@@ -1,4 +1,4 @@
-from flask import make_response, redirect, jsonify, render_template
+from flask import make_response, redirect, jsonify, render_template, request, url_for
 
 from webapp import app, jwt
 
@@ -32,8 +32,7 @@ def expired_token_callback(token):
   token_type = token['type']
   if token_type == "access":
     print("access token has expired - goto refresh")
-    response = make_response(redirect("/token/refresh"))
-    return response
+    return redirect(url_for('refresh_get', request_path=request.path))
 
   elif token_type == "refresh":
     print("refresh token has expired - goto root/login")

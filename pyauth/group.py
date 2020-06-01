@@ -1,8 +1,7 @@
-
 import uuid
 
 from pyauth import mongo
-#import mongo
+
 
 class Error(Exception):
   pass
@@ -29,7 +28,7 @@ class GroupNotFound(Error):
 
 
 class group_properties(object):
-  ''' Readonly container for user properties
+  ''' Readonly container for group properties
   '''
   def __init__(self, group_doc):
     for key in group_doc.keys():
@@ -254,12 +253,3 @@ def find_groups_like(group_name):
 
   return group_data
 
-
-if __name__ == "__main__":
-#  gid = create_group("admin", ['cd7e1b52-8e10-4055-a5c8-f429682ee546'])
-#  print(gid)
-  gid = "9c558ca4-0092-4043-8136-6a08c3f41f81"
-  g_obj = group(group_id=gid)
-  print(g_obj.properties.members)
-  dets = g_obj.get_members_detail(attribute="email")
-  print(dets)

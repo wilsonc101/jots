@@ -18,6 +18,7 @@ app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
 app.config['JWT_COOKIE_SECURE'] = True
 app.config['JWT_COOKIE_SAMESITE'] = "lax"
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 30
 
 jwt = JWTManager(app)
 

@@ -7,7 +7,6 @@ import string
 
 from pyauth import mongo
 
-# TODO - Add UUID check in user string method
 
 class Error(Exception):
   pass
@@ -66,7 +65,7 @@ class user(object):
         raise UserNotFound("user", "user not found")
 
     elif user_id is not None:
-      _check_user_string(user_id)
+      _check_user_string(user_id, is_uuid=True)
 
       user_details = mongo.get_user_by_id(user_id)
       if user_details is None:
@@ -160,9 +159,19 @@ def _check_email(email_address):
     raise InputError("check_email", "invalid email address")
     # if email contains illegal chars, raise error
 
-def _check_user_string(user_string):
-  # if string contains illegal chars, raise error
-  pass
+
+def _check_user_string(user_string, is_uuid=False):
+  # TODO - if string contains illegal chars, raise error
+
+  # If string can't be converted to a UUID, raise error
+  if is_uuid:
+    try:
+      uuid.UUID(user_string)
+    except ValueError:
+      raise InputError("group", "invalid user id given")
+
+  return True
+
 
 def _check_password_complexity(password):
   # if password not complex, raise error

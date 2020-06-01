@@ -34,8 +34,15 @@ def refresh_get():
   current_user = get_jwt_identity()
   access_token = create_access_token(identity=current_user)
 
-  response = make_response(redirect("/page"))
+  if "request_path" in request.args:
+    request_path = html.escape(request.args.get("request_path"))
+  else:
+    request_path = "/page"
+
+  print("token refreshed, redirecting to {}".format(request_path))
+  response = make_response(redirect(request_path))
   set_access_cookies(response, access_token)
+
   return response
 
 
