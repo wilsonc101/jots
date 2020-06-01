@@ -192,14 +192,17 @@ class group(object):
 
 
 def _check_user_string(user_string, is_uuid=False):
-  # TODO - if string contains illegal chars, raise error
+  illegal_chars = [".", "$"]
+  for char in user_string:
+    if char in illegal_chars:
+      raise InputError("check", "bad string")
 
   # If string can't be converted to a UUID, raise error
   if is_uuid:
     try:
       uuid.UUID(user_string)
     except ValueError:
-      raise InputError("group", "invalid user id given")
+      raise InputError("check", "invalid id")
 
   return True
 

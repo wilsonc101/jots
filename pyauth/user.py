@@ -152,8 +152,6 @@ class user(object):
     return True
 
 
-## The following methods should raise errors if checks fail
-## Set to pass until validation method defined
 def _check_email(email_address):
   if "@" not in email_address or "." not in email_address:
     raise InputError("check_email", "invalid email address")
@@ -161,7 +159,10 @@ def _check_email(email_address):
 
 
 def _check_user_string(user_string, is_uuid=False):
-  # TODO - if string contains illegal chars, raise error
+  illegal_chars = ["$", ";", ","]
+  for char in user_string:
+    if char in illegal_chars:
+      raise InputError("check", "bad string")
 
   # If string can't be converted to a UUID, raise error
   if is_uuid:
