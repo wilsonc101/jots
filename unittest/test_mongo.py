@@ -42,11 +42,13 @@ def test_user_registration(mongo_object, user_data):
                           db=mongo_object)
   assert isinstance(user_object, user.user)
   assert isinstance(user_object.properties.resetCode, str)
+  assert user_object.properties.status == "new"
   assert len(user_object.properties.resetCode) > 100
 
   reset_result = user_object.set_password(user_data['correct_password'])
   assert reset_result
   assert user_object.properties.resetCode == ""
+  assert user_object.properties.status == "active"
 
   auth_result_good = user_object.authenticate(user_data['correct_password'])
   assert auth_result_good
@@ -56,6 +58,7 @@ def test_user_registration(mongo_object, user_data):
 
   new_reset_code = user_object.reset_password(service_domain=user_data['service_domain'])
   assert len(user_object.properties.resetCode) > 100
+  assert user_object.properties.status == "reset"
 
   auth_result_reset = user_object.authenticate(user_data['correct_password'])
   assert auth_result_reset is False
@@ -63,6 +66,8 @@ def test_user_registration(mongo_object, user_data):
   new_reset_result = user_object.set_password(user_data['new_password'])
   assert new_reset_result
   assert user_object.properties.resetCode == ""
+  assert user_object.properties.status == "active"
+
 
   auth_result_first = user_object.authenticate(user_data['correct_password'])
   assert auth_result_first is False

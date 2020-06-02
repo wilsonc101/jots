@@ -103,7 +103,8 @@ class user(object):
     password = bcrypt.hashpw(password, bcrypt.gensalt())
     self.update(password=password,
                 resetCode="",
-                resetExpiry="")
+                resetExpiry="",
+                status="active")
 
     return True
 

@@ -90,8 +90,6 @@ def reset_form():
 
   try:
     user.set_password(password)
-    user.update(resetCode="", resetExpiry="", status="active")
-
     response = make_response(redirect("/"))
     return response
 
