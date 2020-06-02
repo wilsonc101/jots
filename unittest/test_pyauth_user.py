@@ -77,3 +77,7 @@ def test_user_registration(mongo_object, user_data):
 
   with pytest.raises(user.UserPropertyError):
     user_object.properties.resetCode = "test"
+
+  search_result = user.find_users_like(user_data['email_address'], db=mongo_object)
+  assert isinstance(search_result, dict)
+  assert search_result[user_data['email_address']] == user_object.properties.userId
