@@ -5,7 +5,7 @@ import datetime
 import random
 import string
 
-from pyauth import mongo
+from . import mongo
 
 
 class Error(Exception):
@@ -49,10 +49,16 @@ class user_properties(object):
 
 
 class user(object):
-  def __init__(self, email_address=None, user_id=None):
+  def __init__(self, email_address=None, user_id=None, db=None):
     ''' Uses supplied detail (email or ID) to find mongo record
         Dynamically populates class properties with mongo document content
     '''
+    if db is None:
+      # This assumes host and port have been set in envvars
+      self.db = mongo.mongo()
+    else:
+      self.db = db
+
     if email_address is None and user_id is None:
       raise InputError("get user", "one unique identifier must be provided - email, userid")
 
@@ -60,14 +66,14 @@ class user(object):
       _check_user_string(email_address)
       _check_email(email_address)
 
-      user_details = mongo.get_user_by_email(email_address)
+      user_details = self.db.get_user_by_email(email_address)
       if user_details is None:
         raise UserNotFound("user", "user not found")
 
     elif user_id is not None:
       _check_user_string(user_id, is_uuid=True)
 
-      user_details = mongo.get_user_by_id(user_id)
+      user_details = self.db.get_user_by_id(user_id)
       if user_details is None:
         raise UserNotFound("user", "user not found")
 
@@ -95,7 +101,10 @@ class user(object):
   def set_password(self, password):
     password = password.encode('utf-8')
     password = bcrypt.hashpw(password, bcrypt.gensalt())
-    self.update(password=password)
+    self.update(password=password,
+                resetCode="",
+                resetExpiry="")
+
     return True
 
 
@@ -139,7 +148,7 @@ class user(object):
       _check_user_string(value)
       user_fields[key] = value
 
-    updated_doc = mongo.update_user(self.properties.userId, user_fields)
+    updated_doc = self.db.update_user(self.properties.userId, user_fields)
 
     if updated_doc is None:
       raise UserActionError("update user", "no user document found to update")
@@ -179,12 +188,19 @@ def _check_password_complexity(password):
   pass
 
 
-def create_user(service_domain, email_address, reset_validity_days=1):
+def create_user(service_domain,
+                email_address,
+                reset_validity_days=1,
+                db=None):
   ''' Creates user based on email address
       domain name is used as seed for reset code
       returns reset code to be used in URL query string
       User must set initial password before login will succeed
   '''
+  if db is None:
+    # This assumes host and port have been set in envvars
+    db = mongo.mongo()
+
   if not email_address:
     raise InputError("create_user", "email address required")
 
@@ -216,7 +232,7 @@ def create_user(service_domain, email_address, reset_validity_days=1):
                  "resetExpiry": date_reset_expiry_str}
 
   try:
-    doc_id = mongo.create_user(user_fields)
+    doc_id = db.create_user(user_fields)
     return reset_code
 
   except mongo.DuplicateAccount:

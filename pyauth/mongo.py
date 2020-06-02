@@ -11,6 +11,11 @@ MONGO_PORT = 27017
 class Error(Exception):
   pass
 
+class ConnectionError(Error):
+  def __init__(self, expression, message):
+    self.expression = expression
+    self.message = message
+
 class RecordError(Error):
   def __init__(self, expression, message):
     self.expression = expression
@@ -27,159 +32,147 @@ class DuplicateGroup(Error):
     self.message = message
 
 
-def create_user(data):
-  client = pymongo.MongoClient(MONGO_HOST, MONGO_PORT)
-  db = client.pyauth
-  collection = db.users
+class mongo(object):
+  def __init__(self, mongo_host=None, mongo_port=None):
+    if mongo_host is not None:
+      self.host = mongo_host
+    elif mongo_host is None and MONGO_HOST:
+      self.host = MONGO_HOST
+    else:
+      raise ConnectionError("new connection", "host name/address required")
 
-  try:
-    doc_id = collection.insert_one(data).inserted_id
-    return doc_id
+    if mongo_port is not None:
+      if not isinstance(mongo_port, int):
+        raise ConnectionError("new connection", "port must be int")
+      self.port = int(mongo_port)
+    elif mongo_port is None and MONGO_PORT:
+      self.port = MONGO_PORT
+    else:
+      raise ConnectionError("new connection", "port required")
 
-  except pymongo.errors.DuplicateKeyError:
-    raise DuplicateAccount("create user", "an account exists with this email address")
-
-
-def update_user(user_id, data):
-  client = pymongo.MongoClient(MONGO_HOST, MONGO_PORT)
-  db = client.pyauth
-  collection = db.users
-
-  doc = collection.find_one_and_update({"userId" : str(user_id)},
-                                       {"$set": data},
-                                        upsert=False,
-                                        return_document=pymongo.collection.ReturnDocument.AFTER)
-  return doc
-
-
-def get_user_by_email(email_address):
-  client = pymongo.MongoClient(MONGO_HOST, MONGO_PORT)
-  db = client.pyauth
-  collection = db.users
-  documents = collection.find({"email": email_address})
-  documents = list(documents)
-
-  if len(documents) > 1:
-    raise RecordError("get_users", "to many records returned")
-
-  elif len(documents) == 0:
-    return None
-
-  return documents[0]
+    self.client = pymongo.MongoClient(self.host, self.port)
+    try:
+      self.db = self.client.pyauth
+      self.users_collection = self.db.users
+      self.groups_collection = self.db.groups
+    except pymongo.errors.ConnectionFailure:
+      raise ConnectionError("new connection", "could not connect to host")
 
 
-def get_user_by_id(user_id):
-  client = pymongo.MongoClient(MONGO_HOST, MONGO_PORT)
-  db = client.pyauth
-  collection = db.users
-  documents = collection.find({"userId": user_id})
-  documents = list(documents)
+  def create_user(self, data):
+    try:
+      doc_id = self.users_collection.insert_one(data).inserted_id
+      return doc_id
 
-  if len(documents) > 1:
-    raise RecordError("get_users", "to many records returned")
-
-  elif len(documents) == 0:
-    return None
-
-  return documents[0]
+    except pymongo.errors.DuplicateKeyError:
+      raise DuplicateAccount("create user", "an account exists with this email address")
 
 
-def get_user_by_reset_code(reset_code):
-  client = pymongo.MongoClient(MONGO_HOST, MONGO_PORT)
-  db = client.pyauth
-  collection = db.users
-  documents = collection.find({"$and": [{"status": {"$eq": "new"}}, {"resetCode": {"$eq": reset_code}}]})
-  documents = list(documents)
-
-  if len(documents) > 1:
-    raise RecordError("get_users_for_reset", "to many records returned")
-
-  elif len(documents) == 0:
-    return None
-
-  return documents[0]
+  def update_user(self, user_id, data):
+    doc = self.users_collection.find_one_and_update({"userId" : str(user_id)},
+                                              {"$set": data},
+                                               upsert=False,
+                                               return_document=pymongo.collection.ReturnDocument.AFTER)
+    return doc
 
 
-def delete_user():
-  # TODO - Once a way of setting permissions is added
-  pass
+  def get_user_by_email(self, email_address):
+    documents = self.users_collection.find({"email": email_address})
+    documents = list(documents)
+
+    if len(documents) > 1:
+      raise RecordError("get_users", "to many records returned")
+
+    elif len(documents) == 0:
+      return None
+
+    return documents[0]
 
 
-def create_group(data):
-  client = pymongo.MongoClient(MONGO_HOST, MONGO_PORT)
-  db = client.pyauth
-  collection = db.groups
+  def get_user_by_id(self, user_id):
+    documents = self.users_collection.find({"userId": user_id})
+    documents = list(documents)
 
-  try:
-    doc_id = collection.insert_one(data).inserted_id
-    return doc_id
+    if len(documents) > 1:
+      raise RecordError("get_users", "to many records returned")
 
-  except pymongo.errors.DuplicateKeyError:
-    raise DuplicateGroup("create group", "a group exists with this name")
+    elif len(documents) == 0:
+      return None
 
-
-def get_group_by_name(group_name):
-  client = pymongo.MongoClient(MONGO_HOST, MONGO_PORT)
-  db = client.pyauth
-  collection = db.groups
-  documents = collection.find({"groupName": group_name})
-  documents = list(documents)
-
-  if len(documents) > 1:
-    raise RecordError("get_group", "to many records returned")
-
-  elif len(documents) == 0:
-    return None
-
-  return documents[0]
+    return documents[0]
 
 
-def get_group_by_id(group_id):
-  client = pymongo.MongoClient(MONGO_HOST, MONGO_PORT)
-  db = client.pyauth
-  collection = db.groups
-  documents = collection.find({"groupId": group_id})
-  documents = list(documents)
+  def get_user_by_reset_code(self, reset_code):
+    documents = self.users_collection.find({"$and": [{"status": {"$eq": "new"}}, {"resetCode": {"$eq": reset_code}}]})
+    documents = list(documents)
 
-  if len(documents) > 1:
-    raise RecordError("get_group", "to many records returned")
+    if len(documents) > 1:
+      raise RecordError("get_users_for_reset", "to many records returned")
 
-  elif len(documents) == 0:
-    return None
+    elif len(documents) == 0:
+      return None
 
-  return documents[0]
+    return documents[0]
 
 
-def update_group(group_id, data):
-  client = pymongo.MongoClient(MONGO_HOST, MONGO_PORT)
-  db = client.pyauth
-  collection = db.groups
-
-  doc = collection.find_one_and_update({"groupId" : str(group_id)},
-                                       {"$set": data},
-                                        upsert=False,
-                                        return_document=pymongo.collection.ReturnDocument.AFTER)
-  return doc
+  def delete_user(self):
+    # TODO - Once a way of setting permissions is added
+    pass
 
 
-def find_groups_by_name(group_name):
-  ''' Use basic regex to find names like that supplied
-      Returns list of tuples: (ID, name)
-  '''
-  client = pymongo.MongoClient(MONGO_HOST, MONGO_PORT)
-  db = client.pyauth
-  collection = db.groups
+  def create_group(self, data):
+    try:
+      doc_id = self.groups_collection.insert_one(data).inserted_id
+      return doc_id
 
-  regex = re.compile('.*{}.*'.format(group_name))
-  docs = collection.find({'groupName': regex})
-
-  group_ids = list()
-  for doc in docs:
-    group_ids.append((doc['groupId'], doc['groupName']))
-
-  return group_ids
+    except pymongo.errors.DuplicateKeyError:
+      raise DuplicateGroup("create group", "a group exists with this name")
 
 
-if __name__ == "__main__":
-  doc = find_groups_by_name("min")
-  print(doc)
+  def get_group_by_name(self, group_name):
+    documents = self.groups_collection.find({"groupName": group_name})
+    documents = list(documents)
+
+    if len(documents) > 1:
+      raise RecordError("get_group", "to many records returned")
+
+    elif len(documents) == 0:
+      return None
+
+    return documents[0]
+
+
+  def get_group_by_id(self, group_id):
+    documents = self.groups_collection.find({"groupId": group_id})
+    documents = list(documents)
+
+    if len(documents) > 1:
+      raise RecordError("get_group", "to many records returned")
+
+    elif len(documents) == 0:
+      return None
+
+    return documents[0]
+
+
+  def update_group(self, group_id, data):
+    doc = self.groups_collection.find_one_and_update({"groupId" : str(group_id)},
+                                                     {"$set": data},
+                                                      upsert=False,
+                                                      return_document=pymongo.collection.ReturnDocument.AFTER)
+    return doc
+
+
+  def find_groups_by_name(self, group_name):
+    ''' Use basic regex to find names like that supplied
+        Returns list of tuples: (ID, name)
+    '''
+    regex = re.compile('.*{}.*'.format(group_name))
+    docs = self.groups_collection.find({'groupName': regex})
+
+    group_ids = list()
+    for doc in docs:
+      group_ids.append((doc['groupId'], doc['groupName']))
+
+    return group_ids
+

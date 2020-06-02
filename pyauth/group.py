@@ -1,6 +1,6 @@
 import uuid
 
-from pyauth import mongo
+from . import mongo
 
 
 class Error(Exception):
@@ -39,19 +39,25 @@ class group_properties(object):
 
 
 class group(object):
-  def __init__(self, group_name=None, group_id=None):
+  def __init__(self, group_name=None, group_id=None, db=None):
+    if db is None:
+      # This assumes host and port have been set in envvars
+      self.db = mongo.mongo()
+    else:
+      self.db = db
+
     if group_name is None and group_id is None:
       raise InputError("group", "one unique identifier must be provided - name, groupid")
 
     if group_name is not None:
       _check_user_string(group_name)
-      group_details = mongo.get_group_by_name(group_name)
+      group_details = self.db.get_group_by_name(group_name)
       if group_details is None:
         raise GroupNotFound("group", "group not found")
 
     elif group_id is not None:
       _check_user_string(group_id)
-      group_details = mongo.get_group_by_id(group_id)
+      group_details = self.db.get_group_by_id(group_id)
       if group_details is None:
         raise GroupNotFound("group", "group not found")
 
@@ -70,14 +76,14 @@ class group(object):
       # Check user is real
       _check_user_string(user_id, is_uuid=True)
 
-      user_details = mongo.get_user_by_id(user_id)
+      user_details = self.db.get_user_by_id(user_id)
       if user_details is None:
         raise GroupActionError("group member", "user not found, can't be added")
 
     elif email is not None:
-      _check_user_string(email)
+      _check_email(email)
 
-      user_details = mongo.get_user_by_email(email)
+      user_details = self.db.get_user_by_email(email)
       if user_details is None:
         raise GroupActionError("group member", "user not found, can't be added")
 
@@ -104,7 +110,7 @@ class group(object):
     user_details = dict()
     for user_id in self.properties.members:
       try:
-        user_doc = mongo.get_user_by_id(user_id)
+        user_doc = self.db.get_user_by_id(user_id)
         if user_doc is None:
           raise GroupActionError("group member", "could not get details, user does not exist")
       except mongo.RecordError as err:
@@ -142,7 +148,7 @@ class group(object):
 
       if not force:
         # If forcing, don't check for a valid user
-        user_details = mongo.get_user_by_id(user_id)
+        user_details = self.db.get_user_by_id(user_id)
         if user_details is None:
           raise GroupActionError("group member", "user not found, can't be removed")
         user_id = user_details['userId']
@@ -150,7 +156,7 @@ class group(object):
     elif email is not None:
       _check_user_string(email)
 
-      user_details = mongo.get_user_by_email(email)
+      user_details = self.db.get_user_by_email(email)
       if user_details is None:
         raise GroupActionError("group member", "user not found, can't be removed")
       user_id = user_details['userId']
@@ -178,7 +184,7 @@ class group(object):
       _check_user_string(value)
       group_fields[key] = value
 
-    updated_doc = mongo.update_group(self.properties.groupId, group_fields)
+    updated_doc = self.db.update_group(self.properties.groupId, group_fields)
 
     if updated_doc is None:
       raise GroupActionError("update group", "no group document found to update")
@@ -189,6 +195,11 @@ class group(object):
       self.properties = group_properties(updated_doc)
 
     return True
+
+
+def _check_email(email_address):
+  if "@" not in email_address or "." not in email_address:
+    raise InputError("check_email", "invalid email address")
 
 
 def _check_user_string(user_string, is_uuid=False):
@@ -207,11 +218,16 @@ def _check_user_string(user_string, is_uuid=False):
   return True
 
 
-def create_group(group_name, group_members=[]):
+def create_group(group_name, group_members=[], db=None):
   ''' Requires a name
       Members must be given by their ID (uuid)
       Returns group ID
   '''
+  if db is None:
+    # This assumes host and port have been set in envvars
+    db = mongo.mongo()
+
+
   if not group_name:
     raise InputError("group", "group name not given")
 
@@ -231,20 +247,24 @@ def create_group(group_name, group_members=[]):
                   "members": group_members}
 
   try:
-    doc_id = mongo.create_group(group_fields)
+    doc_id = db.create_group(group_fields)
     return group_id
 
   except mongo.DuplicateGroup:
       raise GroupActionError("group", "group already exists")
 
 
-def find_groups_like(group_name):
+def find_groups_like(group_name, db=None):
+  if db is None:
+    # This assumes host and port have been set in envvars
+    db = mongo.mongo()
+
   if not group_name:
     raise InputError("group", "group name not given")
 
   _check_user_string(group_name)
 
-  groups = mongo.find_groups_by_name(group_name)
+  groups = db.find_groups_by_name(group_name)
 
   if len(groups) == 0:
     raise GroupNotFound("find group", "no groups found")
