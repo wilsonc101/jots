@@ -140,9 +140,6 @@ def api_groupmember_add(group_id):
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
 
-
-
-
 @app.route('/api/v1/groups/<group_id>/members/remove', methods=['POST'])
 @jwt_required
 def api_groupmember_remove(group_id):
@@ -185,3 +182,26 @@ def api_groupmember_remove(group_id):
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
 
+@app.route('/api/v1/users/find', methods=['POST'])
+@jwt_required
+def api_findusers():
+  # Reject non-JSON payload
+  if not request.json:
+    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+
+  request_content = request.get_json()
+  if 'email' not in request_content:
+    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+
+  email_address = html.escape(request_content['email'])
+
+  username = get_jwt_identity()
+  user = pyauth.user.user(email_address=username)
+  _check_group_permission("admin", user.properties.userId)
+
+  try:
+    response = pyauth.user.find_users_like(email_address)
+    return jsonify(response)
+
+  except pyauth.group.GroupNotFound:
+    return jsonify(dict())

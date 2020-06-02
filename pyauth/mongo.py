@@ -120,6 +120,21 @@ class mongo(object):
     pass
 
 
+  def find_users_by_email_address(self, email_address):
+    ''' Use basic regex to find names like that supplied
+        Returns list of tuples: (ID, name)
+    '''
+    regex = re.compile('.*{}.*'.format(email_address))
+    docs = self.users_collection.find({'email': regex})
+
+    user_ids = list()
+    for doc in docs:
+      print(doc)
+      user_ids.append((doc['userId'], doc['email']))
+
+    return user_ids
+
+
   def create_group(self, data):
     try:
       doc_id = self.groups_collection.insert_one(data).inserted_id

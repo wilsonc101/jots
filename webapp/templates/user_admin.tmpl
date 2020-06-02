@@ -1,0 +1,111 @@
+<html>
+<head>
+  <!-- Bootstrap core CSS -->
+  <link href={{ url_for('static', filename='bootstrap.css') }} rel="stylesheet">
+</head>
+
+<body>
+  <a href="https://{{ api_url }}:5000/logout">Logout</a>
+  <div class="container">
+    <div class="pt-2 tab-pane" id="resultstab">
+      <div class="row">
+        <div class="col-md">
+          <h3>Admin - User Management</h3>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md">
+          <div class="input-group">
+            <input type="text" class="form-control mr-2" id="search-email"> 
+            <button class="btn btn-primary mb-2 mr-2" id="search-btn">Search</button>
+          </div>
+        </div>
+        <div class="col-md" id="search-query-error">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Email Address</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="results-table">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-alerts">
+  </div>
+
+
+  <!-- Bootstrap JavaScript & JQuery -->
+  <script src={{ url_for('static', filename='jquery.js') }}></script>
+  <script src={{ url_for('static', filename='bootstrap.js') }}></script>
+
+  <script>
+    function getCookie(name) {
+      var value = "; " + document.cookie;
+      var parts = value.split("; " + name + "=");
+      if (parts.length == 2) return parts.pop().split(";").shift();
+    }
+
+    $("#search-btn").click(function(){
+      var email_address = $("#search-email").val();
+      $("#results-table").empty()
+      var check_result = $.ajax({
+              url: "https://{{ api_url }}:5000/api/v1/users/find",
+              type: "POST",
+              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
+              contentType:"application/json; charset=utf-8",
+              dataType:"json",
+              data: JSON.stringify({"email": email_address}),
+              success: function (result){
+                for (var key in result) {
+                  if (result.hasOwnProperty(key)) {           
+                    $("#results-table").append('<tr class="table-light">' + 
+                      '<td>' + key + '</td>' + 
+                      '<td><button class="btn btn-sm btn-outline-primary mr-2" data-email="' + key + '" data-userid="' + result[key] + '">Edit</button>' +
+                      '<button class="btn btn-sm btn-outline-danger mr-2" data-userid="' + result[key] + '">Delete</button>' +
+                      '</td></tr>')
+                  }
+                }
+              },
+              error: function (result){
+                $("#page-alerts").empty()
+                $("#page-alerts").append('<div id="ajax-page-error" class="alert alert-danger" role="alert">' +
+                                           'Could not find user - ' + email +
+                                           '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                                           '<span aria-hidden="true">&times;</span>' +
+                                           '</button>' +
+                                           '</div>')
+                $("#ajax-page-error").alert()
+                console.log(result);
+              }
+      });
+    })
+
+
+  </script>
+
+</body> 
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+        

@@ -46,15 +46,26 @@ def refresh_get():
   return response
 
 
-@app.route('/admin')
+@app.route('/admin/groups')
 @jwt_required
-def page_admin():
+def page_admin_group():
   username = get_jwt_identity()
   user = pyauth.user.user(email_address=username)
 
   _check_group_permission("admin", user.properties.userId)
 
-  return render_template("admin.tmpl", api_url=app.config['DOMAIN_NAME'])
+  return render_template("group_admin.tmpl", api_url=app.config['DOMAIN_NAME'])
+
+
+@app.route('/admin/users')
+@jwt_required
+def page_admin_user():
+  username = get_jwt_identity()
+  user = pyauth.user.user(email_address=username)
+
+  _check_group_permission("admin", user.properties.userId)
+
+  return render_template("user_admin.tmpl", api_url=app.config['DOMAIN_NAME'])
 
 
 @app.route('/page')

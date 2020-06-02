@@ -240,4 +240,20 @@ def create_user(service_domain,
     raise UserActionError("create user", "user already exists")
 
 
+def find_users_like(email_address, db=None):
+  if db is None:
+    # This assumes host and port have been set in envvars
+    db = mongo.mongo()
 
+  if not email_address:
+    raise InputError("user", "email address required")
+
+  _check_email(email_address)
+
+  users = db.find_users_by_email_address(email_address)
+
+  user_data = dict()
+  for user_id, email in users:
+    user_data[email] = user_id
+
+  return user_data

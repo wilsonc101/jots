@@ -12,3 +12,4 @@ new_group = {"groupName": str(sys.argv[1]),
 
 doc_id = col_g.insert_one(new_group).inserted_id
 
+
