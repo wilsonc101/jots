@@ -21,9 +21,7 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 30
 jwt = JWTManager(app)
 
 from jots.webapp import error_handlers
-
 from jots.webapp import public_api_endpoints
 from jots.webapp import private_api_endpoints
-
 from jots.webapp import public_web_views
 from jots.webapp import private_web_views

@@ -5,13 +5,6 @@ from jots.pyauth import mongo, user, group
 
 
 @pytest.fixture
-@mongomock.patch(servers=(('dev.localhost', 27017),))
-def mongo_object():
-  db = mongo.mongo(mongo_host='dev.localhost', mongo_port=27017)
-  return db
-
-
-@pytest.fixture
 def user_data():
   data = {"email_address": "a@b.com",
           "correct_password": "password",

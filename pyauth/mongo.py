@@ -55,8 +55,17 @@ class mongo(object):
       self.db = self.client.pyauth
       self.users_collection = self.db.users
       self.groups_collection = self.db.groups
+
+      self.users_collection.create_index("email", unique=True)
+      self.groups_collection.create_index("groupName", unique=True)
     except pymongo.errors.ConnectionFailure:
       raise ConnectionError("new connection", "could not connect to host")
+
+  def clear_collections(self):
+    self.users_collection.drop()
+    self.groups_collection.drop()
+    self.users_collection = self.db.users
+    self.groups_collection = self.db.groups
 
 
   def create_user(self, data):

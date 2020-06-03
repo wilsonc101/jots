@@ -163,7 +163,8 @@
                   if (result.hasOwnProperty(key)) {           
                     $("#results-table").append('<tr class="table-light">' + 
                       '<td>' + key + '</td>' + 
-                      '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-groupedit" data-groupname="' + key + '" data-groupid="' + result[key] + '">Edit</button>' +
+                      '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-groupedit" data-groupname="' + 
+                         key + '" data-groupid="' + result[key] + '">Edit</button>' +
                       '<button class="btn btn-sm btn-outline-danger mr-2" onclick="delete_group(this);" data-groupid="' + result[key] + '">Delete</button>' +
                       '</td></tr>')
                   }

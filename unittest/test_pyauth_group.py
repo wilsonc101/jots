@@ -6,32 +6,6 @@ from jots.pyauth import mongo, user, group
 
 
 @pytest.fixture
-@mongomock.patch(servers=(('dev.localhost', 27017),))
-def mongo_object():
-  db = mongo.mongo(mongo_host='dev.localhost', mongo_port=27017)
-  return db
-
-
-@pytest.fixture
-def example_user(mongo_object):
-  ''' Create a demo user object that may be added to groups
-  '''
-  user_data = {"email_address": "a@b.com",
-               "correct_password": "password",
-               "service_domain": "dev.localhost"}
-
-  reset_code = user.create_user(service_domain=user_data['service_domain'],
-                                email_address=user_data['email_address'],
-                                db=mongo_object)
-
-  user_object = user.user(email_address=user_data['email_address'],
-                          db=mongo_object)
-
-  reset_result = user_object.set_password(user_data['correct_password'])
-  return user_object
-
-
-@pytest.fixture
 def group_data():
   data = {"groupname": "testgroup"}
   return data

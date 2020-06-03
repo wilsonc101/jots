@@ -17,8 +17,14 @@ import jots.pyauth.group
 
 
 def _check_group_permission(group_name, user_id):
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   try:
-    group = jots.pyauth.group.group(group_name=group_name)
+    group = jots.pyauth.group.group(group_name=group_name, db=DB_CON)
   except jots.pyauth.group.GroupNotFound:
     raise error_handlers.InvalidUsage("group not found", status_code=400)
 
@@ -50,8 +56,14 @@ def refresh_get():
 @app.route('/admin/groups')
 @jwt_required
 def page_admin_group():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   username = get_jwt_identity()
-  user = jots.pyauth.user.user(email_address=username)
+  user = jots.pyauth.user.user(email_address=username, db=DB_CON)
 
   _check_group_permission("admin", user.properties.userId)
 
@@ -61,8 +73,14 @@ def page_admin_group():
 @app.route('/admin/users')
 @jwt_required
 def page_admin_user():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   username = get_jwt_identity()
-  user = jots.pyauth.user.user(email_address=username)
+  user = jots.pyauth.user.user(email_address=username, db=DB_CON)
 
   _check_group_permission("admin", user.properties.userId)
 
@@ -76,6 +94,7 @@ def page():
       Page template performs AJAX request to API endpoint
       Outputs reponse to browser console log
   '''
+  # Allow the use of a mock DB during testing
   if app.config['TESTING']:
     DB_CON = app.config['TEST_DB']
   else:
