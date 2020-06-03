@@ -154,7 +154,7 @@ class group(object):
         user_id = user_details['userId']
 
     elif email is not None:
-      _check_user_string(email)
+      _check_email(email)
 
       user_details = self.db.get_user_by_email(email)
       if user_details is None:

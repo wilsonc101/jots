@@ -10,17 +10,23 @@ from flask_jwt_extended import (
     get_jwt_identity, verify_jwt_in_request
 )
 
-from webapp import app
-from webapp import error_handlers
+from jots.webapp import app
+from jots.webapp import error_handlers
 
-import pyauth.user
-import pyauth.group
+import jots.pyauth.user
+import jots.pyauth.group
+
+# Allow the use of a mock DB during testing
+if app.config['TESTING']:
+  DB_CON = app.config['TEST_DB']
+else:
+  DB_CON = None
 
 
 def _check_group_permission(group_name, user_id):
   try:
-    group = pyauth.group.group(group_name=group_name)
-  except pyauth.group.GroupNotFound:
+    group = jots.pyauth.group.group(group_name=group_name, db=DB_CON)
+  except jots.pyauth.group.GroupNotFound:
     raise error_handlers.InvalidUsage("group not found", status_code=400)
 
   if user_id not in group.properties.members:
@@ -33,7 +39,7 @@ def _check_group_permission(group_name, user_id):
 @jwt_required
 def api_index():
   username = get_jwt_identity()
-  user = pyauth.user.user(email_address=username)
+  user = jots.pyauth.user.user(email_address=username, db=DB_CON)
 
   response = {"version": "v1",
               "your_user": user.properties.userId}
@@ -54,14 +60,14 @@ def api_findgroups():
   groupname = html.escape(request_content['groupname'])
 
   username = get_jwt_identity()
-  user = pyauth.user.user(email_address=username)
+  user = jots.pyauth.user.user(email_address=username, db=DB_CON)
   _check_group_permission("admin", user.properties.userId)
 
   try:
-    response = pyauth.group.find_groups_like(groupname)
+    response = jots.pyauth.group.find_groups_like(groupname, db=DB_CON)
     return jsonify(response)
 
-  except pyauth.group.GroupNotFound:
+  except jots.pyauth.group.GroupNotFound:
     return jsonify(dict())
 
 
@@ -83,19 +89,19 @@ def api_groupmembers(group_id):
 
   username = get_jwt_identity()
   try:
-    user = pyauth.user.user(email_address=username)
-  except pyauth.user.UserNotFound:
+    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
     raise error_handlers.InvalidUsage("invalid user", status=403)
 
   try:
-    group = pyauth.group.group(group_id=group_id)
+    group = jots.pyauth.group.group(group_id=group_id, db=DB_CON)
     group_members_with_email = group.get_members_detail(attribute="email")
     return jsonify(group_members_with_email)
-  except pyauth.group.GroupNotFound:
+  except jots.pyauth.group.GroupNotFound:
     return jsonify(dict())
-  except pyauth.group.GroupActionError as err:
+  except jots.pyauth.group.GroupActionError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
-  except pyauth.group.InputError as err:
+  except jots.pyauth.group.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
 
@@ -106,8 +112,8 @@ def api_groupmember_add(group_id):
 
   username = get_jwt_identity()
   try:
-    user = pyauth.user.user(email_address=username)
-  except pyauth.user.UserNotFound:
+    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
     raise error_handlers.InvalidUsage("invalid user", status=403)
 
   _check_group_permission("admin", user.properties.userId)
@@ -122,21 +128,21 @@ def api_groupmember_add(group_id):
 
   email = html.escape(request_content['email'])
   try:
-    group = pyauth.group.group(group_id=group_id)
+    group = jots.pyauth.group.group(group_id=group_id, db=DB_CON)
     new_member_list = group.add_member(email=email)
-  except pyauth.group.GroupNotFound:
+  except jots.pyauth.group.GroupNotFound:
     raise error_handlers.InvalidUsage("group not found", status_code=400)
-  except pyauth.group.InputError as err:
+  except jots.pyauth.group.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
-  except pyauth.group.GroupActionError as err:
+  except jots.pyauth.group.GroupActionError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
   try:
     new_member_list = group.get_members_detail(attribute="email")
     return jsonify(new_member_list)
-  except pyauth.group.GroupActionError as err:
+  except jots.pyauth.group.GroupActionError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
-  except pyauth.group.InputError as err:
+  except jots.pyauth.group.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
 
@@ -147,8 +153,8 @@ def api_groupmember_remove(group_id):
 
   username = get_jwt_identity()
   try:
-    user = pyauth.user.user(email_address=username)
-  except pyauth.user.UserNotFound:
+    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
     raise error_handlers.InvalidUsage("invalid user", status=403)
 
   _check_group_permission("admin", user.properties.userId)
@@ -164,21 +170,21 @@ def api_groupmember_remove(group_id):
   user_id = html.escape(request_content['userid'])
 
   try:
-    group = pyauth.group.group(group_id=group_id)
+    group = jots.pyauth.group.group(group_id=group_id, db=DB_CON)
     new_member_list = group.remove_member(user_id=user_id)
-  except pyauth.group.GroupNotFound:
+  except jots.pyauth.group.GroupNotFound:
     raise error_handlers.InvalidUsage("group not found", status_code=400)
-  except pyauth.group.InputError as err:
+  except jots.pyauth.group.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
-  except pyauth.group.GroupActionError as err:
+  except jots.pyauth.group.GroupActionError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
   try:
     new_member_list = group.get_members_detail(attribute="email")
     return jsonify(new_member_list)
-  except pyauth.group.GroupActionError as err:
+  except jots.pyauth.group.GroupActionError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
-  except pyauth.group.InputError as err:
+  except jots.pyauth.group.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
 
@@ -196,12 +202,12 @@ def api_findusers():
   email_address = html.escape(request_content['email'])
 
   username = get_jwt_identity()
-  user = pyauth.user.user(email_address=username)
+  user = jots.pyauth.user.user(email_address=username, db=DB_CON)
   _check_group_permission("admin", user.properties.userId)
 
   try:
-    response = pyauth.user.find_users_like(email_address)
+    response = jots.pyauth.user.find_users_like(email_address, db=DB_CON)
     return jsonify(response)
 
-  except pyauth.group.GroupNotFound:
+  except jots.pyauth.group.GroupNotFound:
     return jsonify(dict())

@@ -10,10 +10,10 @@ from flask_jwt_extended import (
     get_jwt_identity, verify_jwt_in_request
 )
 
-from webapp import app
-from webapp import error_handlers
+from jots.webapp import app
+from jots.webapp import error_handlers
 
-import pyauth.user
+import jots.pyauth.user
 
 
 # FORM DATA
@@ -23,18 +23,24 @@ def login_form():
       Get user object and check password
       Returns access and refresh tokens with CSRF tokens
   '''
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   form_data = request.form
 
   username = html.escape(form_data['username'])
   password = form_data['password']
 
   try:
-    user = pyauth.user.user(email_address=username)
+    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
 
-  except pyauth.user.UserNotFound:
+  except jots.pyauth.user.UserNotFound:
     raise error_handlers.InvalidUsage("access denied", status_code=403)
 
-  except pyauth.user.InputError as err:
+  except jots.pyauth.user.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
   result = user.authenticate(password)
@@ -57,6 +63,12 @@ def reset_form():
       Validates reset code and sets password
       Returns to login if OK
   '''
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   valid_reset_status = ['new', 'reset']
 
   form_data = request.form
@@ -66,12 +78,12 @@ def reset_form():
   reset_code = html.escape(form_data['resetcode'])
 
   try:
-    user = pyauth.user.user(email_address=username)
+    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
 
-  except pyauth.user.UserNotFound:
+  except jots.pyauth.user.UserNotFound:
     raise error_handlers.InvalidUsage("access denied", status_code=403)
 
-  except pyauth.user.InputError as err:
+  except jots.pyauth.user.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
   # Check user status is suitable for a password reset
@@ -93,17 +105,22 @@ def reset_form():
     response = make_response(redirect("/"))
     return response
 
-  except pyauth.user.InputError as err:
+  except jots.pyauth.user.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
-  except pyauth.user.UserActionError as err:
+  except jots.pyauth.user.UserActionError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
-
 
 
 # JSON
 @app.route('/api/v1/users/new', methods=["POST"])
 def api_newuser():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   # Reject non-JSON payload
   if not request.json:
     raise error_handlers.InvalidUsage("bad payload format", status_code=400)
@@ -116,19 +133,26 @@ def api_newuser():
 
   # This should be the start of a verification process, short-circuit for now
   try:
-    reset_code = pyauth.user.create_user(service_domain=app.config['DOMAIN_NAME'],
-                                         email_address=email)
+    reset_code = jots.pyauth.user.create_user(service_domain=app.config['DOMAIN_NAME'],
+                                              email_address=email,
+                                              db=DB_CON)
 
     # The next step is to email a link to the 'reset' page with a query string (q) containing reset code
     return jsonify({"status": "ok",
                     "reset_code": reset_code})
 
-  except pyauth.user.UserActionError as err:
+  except jots.pyauth.user.UserActionError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
 
 @app.route('/api/v1/users/reset', methods=["POST"])
 def api_passwordreset():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   # Reject non-JSON payload
   if not request.json:
     raise error_handlers.InvalidUsage("bad payload format", status_code=400)
@@ -139,7 +163,7 @@ def api_passwordreset():
 
   email = html.escape(request_content['email'])
 
-  user = pyauth.user.user(email_address=email)
+  user = jots.pyauth.user.user(email_address=email, db=DB_CON)
   reset_code = user.reset_password(service_domain=app.config['DOMAIN_NAME'])
 
   # The next step is to email a link to the 'reset' page with a query string (q) containing reset code

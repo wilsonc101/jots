@@ -9,16 +9,17 @@ from flask_jwt_extended import (
     get_jwt_identity, verify_jwt_in_request
 )
 
-from webapp import app
-import pyauth.user
-import pyauth.group
-from webapp import error_handlers
+from jots.webapp import app
+from jots.webapp import error_handlers
+
+import jots.pyauth.user
+import jots.pyauth.group
 
 
 def _check_group_permission(group_name, user_id):
   try:
-    group = pyauth.group.group(group_name=group_name)
-  except pyauth.group.GroupNotFound:
+    group = jots.pyauth.group.group(group_name=group_name)
+  except jots.pyauth.group.GroupNotFound:
     raise error_handlers.InvalidUsage("group not found", status_code=400)
 
   if user_id not in group.properties.members:
@@ -50,7 +51,7 @@ def refresh_get():
 @jwt_required
 def page_admin_group():
   username = get_jwt_identity()
-  user = pyauth.user.user(email_address=username)
+  user = jots.pyauth.user.user(email_address=username)
 
   _check_group_permission("admin", user.properties.userId)
 
@@ -61,7 +62,7 @@ def page_admin_group():
 @jwt_required
 def page_admin_user():
   username = get_jwt_identity()
-  user = pyauth.user.user(email_address=username)
+  user = jots.pyauth.user.user(email_address=username)
 
   _check_group_permission("admin", user.properties.userId)
 
@@ -75,8 +76,13 @@ def page():
       Page template performs AJAX request to API endpoint
       Outputs reponse to browser console log
   '''
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   username = get_jwt_identity()
-  user = pyauth.user.user(email_address=username)
+  user = jots.pyauth.user.user(email_address=username, db=DB_CON)
   return render_template("page.tmpl", api_url=app.config['DOMAIN_NAME'])
 
 

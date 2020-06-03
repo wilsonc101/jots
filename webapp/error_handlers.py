@@ -1,6 +1,6 @@
 from flask import make_response, redirect, jsonify, render_template, request, url_for
 
-from webapp import app, jwt
+from jots.webapp import app, jwt
 
 class InvalidUsage(Exception):
   status_code = 400

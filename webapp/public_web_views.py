@@ -9,8 +9,8 @@ from flask_jwt_extended import (
     get_jwt_identity, verify_jwt_in_request, get_jwt_claims
 )
 
-from webapp import app
-from webapp import error_handlers
+from jots.webapp import app
+from jots.webapp import error_handlers
 
 
 @app.route('/')
