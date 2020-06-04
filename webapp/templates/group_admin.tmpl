@@ -45,7 +45,7 @@
   <div id="page-alerts">
   </div>
 
-  <!-- Group Create  Modal -->
+  <!-- Group Create Modal -->
   <div id="modal-groupcreate" class="modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -161,7 +161,7 @@
               success: function (result){
                 for (var key in result) {
                   if (result.hasOwnProperty(key)) {           
-                    $("#results-table").append('<tr class="table-light">' + 
+                    $("#results-table").append('<tr class="table-light" id="' + result[key] + '">' + 
                       '<td>' + key + '</td>' + 
                       '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-groupedit" data-groupname="' + 
                          key + '" data-groupid="' + result[key] + '">Edit</button>' +
@@ -306,7 +306,29 @@
     $("#groupcreate-add-btn").click(function(){
       var group_name = $("#groupcreate-name").val();
       console.log("create - " + group_name);
+      var check_result = $.ajax({
+              url: "https://{{ api_url }}:5000/api/v1/groups/new",
+              type: "POST",
+              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
+              contentType:"application/json; charset=utf-8",
+              dataType:"json",
+              data: JSON.stringify({"groupname": group_name}),
+              success: function (result){
+                for (var key in result) {
+                  if (result.hasOwnProperty(key)) {           
+                    $("#results-table").append('<tr class="table-light" id="' + result[key] + '">' + 
+                      '<td>' + key + '</td>' + 
+                      '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-groupedit" data-groupname="' + 
+                         key + '" data-groupid="' + result[key] + '">Edit</button>' +
+                      '<button class="btn btn-sm btn-outline-danger mr-2" onclick="delete_group(this);" data-groupid="' + result[key] + '">Delete</button>' +
+                      '</td></tr>')
+                  }
+                }
 
+                $("#modal-groupcreate").modal('hide');
+                $("#modal-groupcreate").modal('dispose');
+              },
+              error: function (result){
                 $("#creategroup-modal-alerts").empty()
                 $("#creategroup-modal-alerts").append('<div id="ajax-modal-error" class="alert alert-danger" role="alert">' +
                                            'Could not create group -  ' + group_name +
@@ -316,6 +338,8 @@
                                            '</div>')
                 $("#ajax-modal-error").alert()
                 console.log("");
+              }
+      });
 
     })
 
@@ -328,6 +352,33 @@
 
     function delete_group(button) {
       var group_id = $(button).data("groupid");
+
+      var check_result = $.ajax({
+              url: "https://{{ api_url }}:5000/api/v1/groups/delete",
+              type: "POST",
+              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
+              contentType:"application/json; charset=utf-8",
+              dataType:"json",
+              data: JSON.stringify({"groupid": group_id}),
+              success: function (result){
+                $("#" + group_id).remove();
+              },
+              error: function (result){
+                $("#page-alerts").empty()
+                $("#page-alerts").append('<div id="ajax-page-error" class="alert alert-danger" role="alert">' +
+                                           'Could delete group - ' + group_id +
+                                           '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                                           '<span aria-hidden="true">&times;</span>' +
+                                           '</button>' +
+                                           '</div>')
+                $("#ajax-page-error").alert()
+                console.log(result);
+              }
+      });
+
+
+
+
       console.log("delete - " + group_id);
     }
 

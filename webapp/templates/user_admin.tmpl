@@ -1,3 +1,4 @@
+
 <html>
 <head>
   <!-- Bootstrap core CSS -->
@@ -75,6 +76,10 @@
               <div class="input-group">
                 <input type="text" class="form-control mr-2" id="useredit-email">
               </div>
+              <label class="mt-3" for="useredit-status">Status</label>
+              <div class="input-group">
+                <input type="text" class="form-control mr-2" id="useredit-status">
+              </div>
             </div>
           </div>
         </div>
@@ -142,6 +147,27 @@
       $('#title-useredit').html("Edit user - " + user_email);
       $('#useredit-userid').val(user_id);
       $('#useredit-email').val(user_email);
+
+      var check_result = $.ajax({
+              url: "https://{{ api_url }}:5000/api/v1/users/" + user_id  + "/details",
+              type: "GET",
+              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
+              success: function (result){
+                for (var key in result) {
+                  if (result.hasOwnProperty(key)) {
+                     if (key == "status") {
+                       $('#useredit-status').val(result[key]);
+                     }
+                     console.log(result[key] + ' -- ' + key);
+                  }
+                }
+              },
+              error: function (result){
+                console.log(result);
+              }
+      });
+
+
 
     })
 

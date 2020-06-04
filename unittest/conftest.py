@@ -7,7 +7,7 @@ import jots.webapp
 from jots.pyauth import mongo, user, group
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 @mongomock.patch(servers=(('dev.localhost', 27017),))
 def mongo_object():
   db = mongo.mongo(mongo_host='dev.localhost', mongo_port=27017)
@@ -18,7 +18,7 @@ def mongo_object():
   return db
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def registered_user_data():
   data = {"email_address": "a@b.com",
           "password": "password",
@@ -26,7 +26,7 @@ def registered_user_data():
   return data
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def registered_user(mongo_object, registered_user_data):
   ''' Create a user object that is registered but not active
   '''
@@ -42,7 +42,7 @@ def registered_user(mongo_object, registered_user_data):
 
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def example_user_data():
   data = {"email_address": "c@d.com",
           "password": "password",
@@ -51,7 +51,7 @@ def example_user_data():
   return data
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def example_user(mongo_object, example_user_data):
   ''' Create a demo user object that may be added to groups
   '''
@@ -68,13 +68,13 @@ def example_user(mongo_object, example_user_data):
   mongo_object.clear_collections()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def example_group_data():
   data = {"groupname": "admin"}
   return data
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def example_group(mongo_object, example_group_data, example_user):
   group_id = group.create_group(group_name=example_group_data['groupname'],
                                 group_members=[example_user.properties.userId],
@@ -87,7 +87,7 @@ def example_group(mongo_object, example_group_data, example_user):
   mongo_object.clear_collections()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def client(mongo_object):
   with jots.webapp.app.test_client() as client:
     jots.webapp.app.config['TESTING'] = True

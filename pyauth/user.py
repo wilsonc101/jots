@@ -4,6 +4,7 @@ import uuid
 import datetime
 import random
 import string
+import copy
 
 from . import mongo
 
@@ -46,6 +47,12 @@ class user_properties(object):
 
   def __setattr__(self, name, value):
     raise UserPropertyError("set property", "user properties are read-only, use update method")
+
+  def as_dict(self):
+    attr_as_dict = copy.deepcopy(self.__dict__)
+    if "password" in attr_as_dict:
+      del attr_as_dict['password']
+    return attr_as_dict
 
 
 class user(object):

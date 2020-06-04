@@ -22,10 +22,11 @@ def test_group_membership(mongo_object, example_user, group_data):
       10) Check find returns matching group details
   '''
   # 1
-  group_id = group.create_group(group_name=group_data['groupname'],
+  new_group_data = group.create_group(group_name=group_data['groupname'],
                                 group_members=[example_user.properties.userId],
                                 db=mongo_object)
-
+  assert group_data['groupname'] in new_group_data
+  group_id = new_group_data[group_data['groupname']]
   try:
     uuid.UUID(group_id)
   except ValueError:
@@ -35,7 +36,7 @@ def test_group_membership(mongo_object, example_user, group_data):
   group_object_by_name = group.group(group_name=group_data['groupname'],
                                      db=mongo_object)
   assert isinstance(group_object_by_name, group.group)
-  assert group_object_by_name.properties.groupId == group_id
+  assert group_object_by_name.properties.groupId == new_group_data[group_data['groupname']]
   assert example_user.properties.userId in group_object_by_name.properties.members
 
   #3

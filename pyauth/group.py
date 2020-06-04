@@ -218,6 +218,31 @@ def _check_user_string(user_string, is_uuid=False):
   return True
 
 
+def delete_group(group_id, db=None):
+  ''' Requires group ID
+      Returns boolean
+  '''
+  if db is None:
+    # This assumes host and port have been set in envvars
+    db = mongo.mongo()
+
+  if not group_id:
+    raise InputError("group", "group id not given")
+
+  _check_user_string(group_id, is_uuid=True)
+
+  group_obj = group(group_id=group_id, db=db)
+  if group_obj.properties.groupName == "admin":
+    raise GroupActionError("delete group", "admin group cannot be deleted")
+
+  try:
+    result = db.delete_group(group_id)
+    return result
+  except mongo.RecordError as err:
+    raise GroupActionError("delete group", err.message)
+
+
+
 def create_group(group_name, group_members=[], db=None):
   ''' Requires a name
       Members must be given by their ID (uuid)
@@ -226,7 +251,6 @@ def create_group(group_name, group_members=[], db=None):
   if db is None:
     # This assumes host and port have been set in envvars
     db = mongo.mongo()
-
 
   if not group_name:
     raise InputError("group", "group name not given")
@@ -248,7 +272,7 @@ def create_group(group_name, group_members=[], db=None):
 
   try:
     doc_id = db.create_group(group_fields)
-    return group_id
+    return {group_name: group_id}
 
   except mongo.DuplicateGroup:
       raise GroupActionError("group", "group already exists")

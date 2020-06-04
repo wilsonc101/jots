@@ -16,14 +16,14 @@ from jots.webapp import error_handlers
 import jots.pyauth.user
 import jots.pyauth.group
 
-# Allow the use of a mock DB during testing
-if app.config['TESTING']:
-  DB_CON = app.config['TEST_DB']
-else:
-  DB_CON = None
-
 
 def _check_group_permission(group_name, user_id):
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   try:
     group = jots.pyauth.group.group(group_name=group_name, db=DB_CON)
   except jots.pyauth.group.GroupNotFound:
@@ -38,6 +38,12 @@ def _check_group_permission(group_name, user_id):
 @app.route('/api')
 @jwt_required
 def api_index():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   username = get_jwt_identity()
   user = jots.pyauth.user.user(email_address=username, db=DB_CON)
 
@@ -49,6 +55,12 @@ def api_index():
 @app.route('/api/v1/groups/find', methods=['POST'])
 @jwt_required
 def api_findgroups():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   # Reject non-JSON payload
   if not request.json:
     raise error_handlers.InvalidUsage("bad payload format", status_code=400)
@@ -59,8 +71,13 @@ def api_findgroups():
 
   groupname = html.escape(request_content['groupname'])
 
+
   username = get_jwt_identity()
-  user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+  try:
+    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
+
   _check_group_permission("admin", user.properties.userId)
 
   try:
@@ -74,17 +91,81 @@ def api_findgroups():
 @app.route('/api/v1/groups/new', methods=['POST'])
 @jwt_required
 def api_newgroup():
-  pass
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
 
-@app.route('/api/v1/groups/<group_id>/delete', methods=['POST'])
+  username = get_jwt_identity()
+  try:
+    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
+
+  _check_group_permission("admin", user.properties.userId)
+
+  # Reject non-JSON payload
+  if not request.json:
+    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+
+  request_content = request.get_json()
+  if 'groupname' not in request_content:
+    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+
+  group_name = html.escape(request_content['groupname'])
+  try:
+    new_group = jots.pyauth.group.create_group(group_name, db=DB_CON)
+    return jsonify(new_group)
+  except jots.pyauth.group.DuplicateGroup:
+    raise error_handlers.InvalidUsage("group name already used", status_code=400)
+
+
+@app.route('/api/v1/groups/delete', methods=['POST'])
 @jwt_required
 def api_deletegroup():
-  pass
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
+  username = get_jwt_identity()
+  try:
+    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
+
+  _check_group_permission("admin", user.properties.userId)
+
+  # Reject non-JSON payload
+  if not request.json:
+    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+
+  request_content = request.get_json()
+  if 'groupid' not in request_content:
+    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+
+  group_id = html.escape(request_content['groupid'])
+  try:
+    result = jots.pyauth.group.delete_group(group_id, db=DB_CON)
+    return jsonify({"result": str(result)})
+  except jots.pyauth.group.GroupNotFound as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+  except jots.pyauth.group.GroupActionError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+
 
 
 @app.route('/api/v1/groups/<group_id>/members')
 @jwt_required
 def api_groupmembers(group_id):
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   group_id = html.escape(group_id)
 
   username = get_jwt_identity()
@@ -108,6 +189,12 @@ def api_groupmembers(group_id):
 @app.route('/api/v1/groups/<group_id>/members/add', methods=['POST'])
 @jwt_required
 def api_groupmember_add(group_id):
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   group_id = html.escape(group_id)
 
   username = get_jwt_identity()
@@ -149,6 +236,12 @@ def api_groupmember_add(group_id):
 @app.route('/api/v1/groups/<group_id>/members/remove', methods=['POST'])
 @jwt_required
 def api_groupmember_remove(group_id):
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   group_id = html.escape(group_id)
 
   username = get_jwt_identity()
@@ -191,6 +284,12 @@ def api_groupmember_remove(group_id):
 @app.route('/api/v1/users/find', methods=['POST'])
 @jwt_required
 def api_findusers():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   # Reject non-JSON payload
   if not request.json:
     raise error_handlers.InvalidUsage("bad payload format", status_code=400)
@@ -202,7 +301,11 @@ def api_findusers():
   email_address = html.escape(request_content['email'])
 
   username = get_jwt_identity()
-  user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+  try:
+    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
+
   _check_group_permission("admin", user.properties.userId)
 
   try:
@@ -211,3 +314,41 @@ def api_findusers():
 
   except jots.pyauth.group.GroupNotFound:
     return jsonify(dict())
+
+
+@app.route('/api/v1/users/<user_id>/details')
+@jwt_required
+def api_user_details(user_id):
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
+  req_username = get_jwt_identity()
+  req_user = jots.pyauth.user.user(email_address=req_username, db=DB_CON)
+  _check_group_permission("admin", req_user.properties.userId)
+
+  user_id = html.escape(user_id)
+
+  reg_username = get_jwt_identity()
+  try:
+    reg_user = jots.pyauth.user.user(email_address=req_username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
+
+  _check_group_permission("admin", req_user.properties.userId)
+
+  try:
+    user = jots.pyauth.user.user(user_id=user_id, db=DB_CON)
+    return jsonify(user.properties.as_dict())
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
+  except jots.pyauth.user.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+
+
+
+
+

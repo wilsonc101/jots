@@ -43,6 +43,9 @@ def login_form():
   except jots.pyauth.user.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
+  if user.properties.status != "active":
+    raise error_handlers.InvalidUsage("access denied", status_code=403)
+
   result = user.authenticate(password)
   if not result:
     raise error_handlers.InvalidUsage("access denied", status_code=403)

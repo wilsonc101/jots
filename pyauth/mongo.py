@@ -66,6 +66,8 @@ class mongo(object):
     self.groups_collection.drop()
     self.users_collection = self.db.users
     self.groups_collection = self.db.groups
+    self.users_collection.create_index("email", unique=True)
+    self.groups_collection.create_index("groupName", unique=True)
 
 
   def create_user(self, data):
@@ -138,7 +140,6 @@ class mongo(object):
 
     user_ids = list()
     for doc in docs:
-      print(doc)
       user_ids.append((doc['userId'], doc['email']))
 
     return user_ids
@@ -200,3 +201,15 @@ class mongo(object):
 
     return group_ids
 
+
+  def delete_group(self, group_id):
+    result = self.groups_collection.delete_one({"groupId": str(group_id)})
+
+    if result.deleted_count > 1:
+      raise RecordError("delete group", "unexpected number of documents deleted")
+
+    elif result.deleted_count == 0:
+      raise RecordError("delete group", "no documents to deleted")
+
+    else:
+      return True
