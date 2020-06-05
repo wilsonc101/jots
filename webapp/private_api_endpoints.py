@@ -326,18 +326,13 @@ def api_user_details(user_id):
     DB_CON = None
 
   req_username = get_jwt_identity()
-  req_user = jots.pyauth.user.user(email_address=req_username, db=DB_CON)
+  try:
+    req_user = jots.pyauth.user.user(email_address=req_username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
   _check_group_permission("admin", req_user.properties.userId)
 
   user_id = html.escape(user_id)
-
-  reg_username = get_jwt_identity()
-  try:
-    reg_user = jots.pyauth.user.user(email_address=req_username, db=DB_CON)
-  except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
-
-  _check_group_permission("admin", req_user.properties.userId)
 
   try:
     user = jots.pyauth.user.user(user_id=user_id, db=DB_CON)
@@ -348,7 +343,46 @@ def api_user_details(user_id):
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
 
+@app.route('/api/v1/users/<user_id>/set/<user_attribute>', methods=['POST'])
+@jwt_required
+def api_set_user_attribute(user_id, user_attribute):
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
 
+  req_username = get_jwt_identity()
+  try:
+    req_user = jots.pyauth.user.user(email_address=req_username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
+  _check_group_permission("admin", req_user.properties.userId)
 
+  # Reject non-JSON payload
+  if not request.json:
+    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
 
+  request_content = request.get_json()
+  if "value" not in request_content:
+    raise error_handlers.InvalidUsage("bad payload", status_code=400)
 
+  user_id = html.escape(user_id)
+  user_attribute = html.escape(user_attribute)
+  attribute_value = html.escape(request_content['value'])
+
+  try:
+    user = jots.pyauth.user.user(user_id=user_id, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
+  except jots.pyauth.user.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+  try:
+    user.update_named_attribute(user_attribute, attribute_value)
+    return jsonify({"new_value": user.properties.as_dict()[user_attribute]})
+  except jots.pyauth.user.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+  except jots.pyauth.user.UserActionError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+  

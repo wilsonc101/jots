@@ -143,6 +143,34 @@ class user(object):
     return reset_code
 
 
+  def update_named_attribute(self, attribute, value):
+    _check_user_string(attribute)
+    _check_user_string(value)
+
+    if attribute not in self.properties.as_dict():
+      raise InputError("update attribute", "attribute does not exist")
+
+    # Some attributes have proscriptive value requirements, check value is allowed
+    defined_values = {"status": ["disabled", "reset"]}
+    if attribute in defined_values:
+      if value not in defined_values[attribute]:
+        raise InputError("update attribute", "{} must be one of {}".format(attribute, str(defined_values[attribute])))
+
+    user_field = {attribute: value}
+
+    updated_doc = self.db.update_user(self.properties.userId, user_field)
+
+    if updated_doc is None:
+      raise UserActionError("update user", "no user document found to update")
+    else:
+      # Drop Mongo doc ID  before setting properties
+      if "_id" in updated_doc:
+        del updated_doc['_id']
+      self.properties = user_properties(updated_doc)
+
+    return True
+
+
   def update(self, **kwargs):
     ''' Takes kwargs, converts to dict
         Updates mongo and local properties object if OK

@@ -1,4 +1,3 @@
-
 <html>
 <head>
   <!-- Bootstrap core CSS -->
@@ -79,6 +78,8 @@
               <label class="mt-3" for="useredit-status">Status</label>
               <div class="input-group">
                 <input type="text" class="form-control mr-2" id="useredit-status">
+                  <div class="input-group-append" id="useredit-status-button">
+                  </div>
               </div>
             </div>
           </div>
@@ -157,8 +158,16 @@
                   if (result.hasOwnProperty(key)) {
                      if (key == "status") {
                        $('#useredit-status').val(result[key]);
+                       if ((result[key] == "active") || (result[key] == "reset") || (result[key] == "new")) {
+                         $("#useredit-status-button").append('<button class="btn btn-outline-secondary" data-action="reset" data-userid="' + user_id + '"' +
+                            ' onclick="change_user_status(this);" "type="button">Reset</button>')
+                         $("#useredit-status-button").append('<button class="btn btn-outline-secondary" data-action="disabled" data-userid="' + user_id + '"' +
+                            ' onclick="change_user_status(this);" type="button">Disable</button>')
+                       } else if (result[key] == "disabled") {
+                         $("#useredit-status-button").append('<button class="btn btn-outline-secondary" data-action="reset" data-userid="' + user_id + '"' +
+                            ' onclick="change_user_status(this);" "type="button">Reset</button>')
+                       }
                      }
-                     console.log(result[key] + ' -- ' + key);
                   }
                 }
               },
@@ -166,10 +175,41 @@
                 console.log(result);
               }
       });
-
-
-
     })
+
+    $('#modal-useredit').on('hidden.bs.modal', function(e) {
+      $("#useredit-status-button").empty();
+    })
+
+
+    function change_user_status(button) {
+      var user_id = $(button).data("userid");
+      var action = $(button).data("action");
+
+      var check_result = $.ajax({
+              url: "https://{{ api_url }}:5000/api/v1/users/" + user_id + "/set/status",
+              type: "POST",
+              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
+              contentType:"application/json; charset=utf-8",
+              dataType:"json",
+              data: JSON.stringify({"value": action}),
+              success: function (result){
+                $('#useredit-status').val(result['new_value']);
+              },
+              error: function (result){
+                $("#edituser-modal-alerts").empty()
+                $("#edituser-modal-alerts").append('<div id="ajax-page-error" class="alert alert-danger" role="alert">' +
+                                           'Could not change user status' +
+                                           '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                                           '<span aria-hidden="true">&times;</span>' +
+                                           '</button>' +
+                                           '</div>')
+                $("#ajax-page-error").alert()
+                console.log(result);
+              }
+      });
+
+    }
 
   </script>
 
