@@ -118,11 +118,11 @@
               success: function (result){
                 for (var key in result) {
                   if (result.hasOwnProperty(key)) {           
-                    $("#results-table").append('<tr class="table-light">' + 
+                    $("#results-table").append('<tr class="table-light" id="' + result[key] +'">' + 
                       '<td>' + key + '</td>' + 
                       '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-useredit" data-email="' + 
                          key + '" data-userid="' + result[key] + '">Edit</button>' +
-                      '<button class="btn btn-sm btn-outline-danger mr-2" data-userid="' + result[key] + '">Delete</button>' +
+                      '<button class="btn btn-sm btn-outline-danger mr-2" onclick="delete_user(this);" data-userid="' + result[key] + '">Delete</button>' +
                       '</td></tr>')
                   }
                 }
@@ -200,6 +200,35 @@
                 $("#edituser-modal-alerts").empty()
                 $("#edituser-modal-alerts").append('<div id="ajax-page-error" class="alert alert-danger" role="alert">' +
                                            'Could not change user status' +
+                                           '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                                           '<span aria-hidden="true">&times;</span>' +
+                                           '</button>' +
+                                           '</div>')
+                $("#ajax-page-error").alert()
+                console.log(result);
+              }
+      });
+
+    }
+
+
+    function delete_user(button) {
+      var user_id = $(button).data("userid");
+
+      var check_result = $.ajax({
+              url: "https://{{ api_url }}:5000/api/v1/users/delete",
+              type: "POST",
+              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
+              contentType:"application/json; charset=utf-8",
+              dataType:"json",
+              data: JSON.stringify({"userid": user_id}),
+              success: function (result){
+                $("#" + user_id).remove();
+              },
+              error: function (result){
+                $("#page-alerts").empty()
+                $("#page-alerts").append('<div id="ajax-page-error" class="alert alert-danger" role="alert">' +
+                                           'Could delete user - ' + user_id +
                                            '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
                                            '<span aria-hidden="true">&times;</span>' +
                                            '</button>' +

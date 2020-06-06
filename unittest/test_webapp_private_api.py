@@ -38,6 +38,7 @@ def test_post_protected_endpoint(client, example_user, example_user_data, regist
       3) Remove group member
       4) Find user and confirm matching content
       5) Create and delete a new group
+      6) Delete user
   '''
   with client.application.app_context():
     access_token = create_access_token(example_user.properties.email)
@@ -102,6 +103,16 @@ def test_post_protected_endpoint(client, example_user, example_user_data, regist
 
   post_data = {"groupid": new_group_id}
   result = client.post("/api/v1/groups/delete",
+                       data=json.dumps(post_data),
+                       headers=headers,
+                       follow_redirects=True)
+
+  assert result.status_code == 200
+  assert "result" in result.json
+
+  #6
+  post_data = {"userid": example_user.properties.userId}
+  result = client.post("/api/v1/users/delete",
                        data=json.dumps(post_data),
                        headers=headers,
                        follow_redirects=True)

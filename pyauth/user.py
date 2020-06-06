@@ -224,6 +224,26 @@ def _check_password_complexity(password):
   pass
 
 
+def delete_user(user_id, db=None):
+  ''' Requires user ID
+      Returns boolean
+  '''
+  if db is None:
+    # This assumes host and port have been set in envvars
+    db = mongo.mongo()
+
+  if not user_id:
+    raise InputError("user", "user id not given")
+
+  _check_user_string(user_id, is_uuid=True)
+
+  try:
+    result = db.delete_user(user_id)
+    return result
+  except mongo.RecordError as err:
+    raise UserActionError("delete user", err.message)
+
+
 def create_user(service_domain,
                 email_address,
                 reset_validity_days=1,

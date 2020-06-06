@@ -126,9 +126,17 @@ class mongo(object):
     return documents[0]
 
 
-  def delete_user(self):
-    # TODO - Once a way of setting permissions is added
-    pass
+  def delete_user(self, user_id):
+    result = self.users_collection.delete_one({"userId": str(user_id)})
+
+    if result.deleted_count > 1:
+      raise RecordError("delete user", "unexpected number of documents deleted")
+
+    elif result.deleted_count == 0:
+      raise RecordError("delete user", "no documents to deleted")
+
+    else:
+      return True
 
 
   def find_users_by_email_address(self, email_address):

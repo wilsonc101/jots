@@ -82,10 +82,8 @@ def reset_form():
 
   try:
     user = jots.pyauth.user.user(email_address=username, db=DB_CON)
-
   except jots.pyauth.user.UserNotFound:
     raise error_handlers.InvalidUsage("access denied", status_code=403)
-
   except jots.pyauth.user.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
@@ -107,10 +105,8 @@ def reset_form():
     user.set_password(password)
     response = make_response(redirect("/"))
     return response
-
   except jots.pyauth.user.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
-
   except jots.pyauth.user.UserActionError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
@@ -166,9 +162,21 @@ def api_passwordreset():
 
   email = html.escape(request_content['email'])
 
-  user = jots.pyauth.user.user(email_address=email, db=DB_CON)
-  reset_code = user.reset_password(service_domain=app.config['DOMAIN_NAME'])
+  try:
+    user = jots.pyauth.user.user(email_address=email, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("bad user", status_code=400)
+  except jots.pyauth.user.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
 
+  try:
+    reset_code = user.reset_password(service_domain=app.config['DOMAIN_NAME'])
+  except jots.pyauth.user.UserActionError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+  except jots.pyauth.user.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+  # TODO - Indegrate with mailer
   # The next step is to email a link to the 'reset' page with a query string (q) containing reset code
   return jsonify({"status": "ok",
                   "reset_code": reset_code})

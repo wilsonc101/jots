@@ -378,11 +378,63 @@ def api_set_user_attribute(user_id, user_attribute):
   except jots.pyauth.user.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
+  # Changing to reset status should trigger a password reset
+  # Otherwise, use attribute change method
+  if user_attribute == "status" and attribute_value == "reset":
+    try:
+      # TODO - Indegrate with mailer
+      # The next step is to email a link to the 'reset' page with a query string (q) containing reset code
+      reset_code = user.reset_password(service_domain=app.config['DOMAIN_NAME'])
+      return jsonify({"new_value": user.properties.as_dict()[user_attribute]})
+
+    except jots.pyauth.user.UserActionError as err:
+      raise error_handlers.InvalidUsage(err.message, status_code=400)
+    except jots.pyauth.user.InputError as err:
+      raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+  else:
+    try:
+      user.update_named_attribute(user_attribute, attribute_value)
+      return jsonify({"new_value": user.properties.as_dict()[user_attribute]})
+    except jots.pyauth.user.InputError as err:
+      raise error_handlers.InvalidUsage(err.message, status_code=400)
+    except jots.pyauth.user.UserActionError as err:
+      raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+
+@app.route('/api/v1/users/delete', methods=['POST'])
+@jwt_required
+def api_user_delete():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
+  req_username = get_jwt_identity()
   try:
-    user.update_named_attribute(user_attribute, attribute_value)
-    return jsonify({"new_value": user.properties.as_dict()[user_attribute]})
-  except jots.pyauth.user.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    req_user = jots.pyauth.user.user(email_address=req_username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
+  _check_group_permission("admin", req_user.properties.userId)
+
+  # Reject non-JSON payload
+  if not request.json:
+    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+
+  request_content = request.get_json()
+  if "userid" not in request_content:
+    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+
+  user_id = html.escape(request_content['userid'])
+
+  try:
+    result = jots.pyauth.user.delete_user(user_id, db=DB_CON)
+    return jsonify({"result": str(result)})
   except jots.pyauth.user.UserActionError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
-  
+
+
+
+
+
