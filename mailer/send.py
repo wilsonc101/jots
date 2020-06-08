@@ -41,7 +41,8 @@ class personalised_email(object):
     self.recipient = recipient
 
     # Templates must exist, each with a handle
-    available_templates = {"reset": "reset.tmpl"}
+    available_templates = {"reset": "reset.tmpl",
+                           "newuser": "new_user.tmpl"}
 
     _check_user_string(template_name)
     if template_name not in available_templates.keys():

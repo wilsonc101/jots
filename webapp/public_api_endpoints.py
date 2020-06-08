@@ -142,7 +142,7 @@ def api_newuser():
   # The next step is to email a link to the 'reset' page with a query string (q) containing reset code
   try:
     email_obj = mailer.personalised_email(recipient=email,
-                                          template_name="reset",
+                                          template_name="newuser",
                                           data={"site_name": app.config['DOMAIN_NAME'],
                                                 "reset_url": "https://{}:5000/reset?q={}".format(app.config['DOMAIN_NAME'], reset_code)})
     if app.config['TESTING']:
@@ -190,8 +190,21 @@ def api_passwordreset():
   except jots.pyauth.user.InputError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
-  # TODO - Indegrate with mailer
   # The next step is to email a link to the 'reset' page with a query string (q) containing reset code
+  try:
+    email_obj = mailer.personalised_email(recipient=email,
+                                          template_name="reset",
+                                          data={"site_name": app.config['DOMAIN_NAME'],
+                                                "reset_url": "https://{}:5000/reset?q={}".format(app.config['DOMAIN_NAME'], reset_code)})
+    if app.config['TESTING']:
+      email_obj.send(mail_agent="file")
+    else:
+      email_obj.send()
+  except mailer.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+  except mailer.MailActionError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+
   return jsonify({"status": "ok",
                   "reset_code": reset_code})
 
