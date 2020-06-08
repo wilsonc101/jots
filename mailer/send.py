@@ -1,7 +1,7 @@
 import os
 import jinja2
 
-import to_file
+from . import to_file
 
 class Error(Exception):
   pass
@@ -18,7 +18,7 @@ class MailActionError(Error):
 
 
 class personalised_email(object):
-  def __init__(self, recipient, template_name, data=None, template_path="templates/"):
+  def __init__(self, recipient, template_name, data=None, template_path=None):
     if recipient is None:
       raise InputError("new email", "recipient not given")
     if not isinstance(recipient, str):
@@ -29,9 +29,12 @@ class personalised_email(object):
     if not isinstance(template_name, str):
       raise InputError("new email", "template name must be str")
 
-
     if data is not None and not isinstance(data, dict):
         raise InputError("new email", "email data must be dict")
+
+    # Assume a local templates dir if not given
+    if template_path is None:
+      template_path = "{}/templates/".format(os.path.dirname(os.path.abspath(__file__)))
 
     _check_user_string(recipient)
     _check_email(recipient)
@@ -68,9 +71,12 @@ class personalised_email(object):
     except:
       raise MailActionError("render", "error rendering template {}".format(self.template_filename))
 
+  def _email_to_string(self, recipient, mail_body):
+    return mail_body
 
   def send(self, mail_agent="file"):
-    available_agents = {"file": to_file.write_to_file}
+    available_agents = {"file": to_file.write_to_file,
+                        "string": self._email_to_string}
 
     _check_user_string(mail_agent)
     if mail_agent not in available_agents.keys():
@@ -102,12 +108,3 @@ def _check_email(email_address):
   return True
 
 
-if __name__ == "__main__":
-  data = {"reset_url": "https://thing?reset=abs",
-          "site_name": "https://thing"}
-  email = personalised_email("chris.wilson@robotika.co.uk",
-                             "reset",
-                             data=data)
-  print(email)
-  print(email.recipient)
-  print(email.send())
