@@ -300,3 +300,24 @@ def find_groups_like(group_name, db=None):
 
   return group_data
 
+
+def find_user_in_group(user_id, db=None):
+  ''' Returns tuple of group ID and name for all groups
+      the given user ID is a memeber of
+  '''
+  if db is None:
+    # This assumes host and port have been set in envvars
+    db = mongo.mongo()
+
+  if not user_id:
+    raise InputError("find user groups", "user id not given")
+
+  _check_user_string(user_id, is_uuid=True)
+  groups = db.find_user_groups(user_id)
+
+  # Repack tuples for easier javascript iteration
+  group_data = dict()
+  for group_id, group_name in groups:
+    group_data[group_name] = group_id
+
+  return group_data

@@ -11,7 +11,8 @@ from flask_jwt_extended import (
 )
 
 import jots.pyauth.user
-from jots.webapp import app
+import jots.pyauth.group
+from jots.webapp import app, jwt
 from jots.webapp import error_handlers
 from jots.mailer import send as mailer
 
@@ -50,7 +51,15 @@ def login_form():
   if not result:
     raise error_handlers.InvalidUsage("access denied", status_code=403)
 
-  access_token = create_access_token(identity=username)
+  group_data = jots.pyauth.group.find_user_in_group(user.properties.userId, db=DB_CON)
+  group_names = list()
+  for group in group_data.keys():
+    if group != "admin":
+      group_names.append(group)
+
+  access_token = create_access_token(identity=username,
+                                     user_claims={"groups": group_names})
+
   refresh_token = create_refresh_token(identity=username)
 
   response = make_response(redirect("/page"))

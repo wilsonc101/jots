@@ -10,7 +10,7 @@ def group_data():
   data = {"groupname": "testgroup"}
   return data
 
-def test_group_membership(mongo_object, example_user, group_data):
+def test_group_management(mongo_object, example_user, group_data):
   ''' Test user registration workflow
       1) Create group and check a valid UUID is returned
       2) Get group by name returns a group object, it's ID is the same as previously created and member is present

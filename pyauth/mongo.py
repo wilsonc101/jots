@@ -203,11 +203,11 @@ class mongo(object):
     regex = re.compile('.*{}.*'.format(group_name))
     docs = self.groups_collection.find({'groupName': regex})
 
-    group_ids = list()
+    groups = list()
     for doc in docs:
-      group_ids.append((doc['groupId'], doc['groupName']))
+      groups.append((doc['groupId'], doc['groupName']))
 
-    return group_ids
+    return groups
 
 
   def delete_group(self, group_id):
@@ -221,3 +221,14 @@ class mongo(object):
 
     else:
       return True
+
+
+  def find_user_groups(self, user_id):
+    docs = self.groups_collection.find({"members": str(user_id)})
+    docs = list(docs)
+
+    groups = list()
+    for doc in docs:
+      groups.append((doc['groupId'], doc['groupName']))
+
+    return groups
