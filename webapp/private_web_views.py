@@ -112,6 +112,18 @@ def page():
 
   username = get_jwt_identity()
   user = jots.pyauth.user.user(email_address=username, db=DB_CON)
-  return render_template("page.tmpl", api_url=app.config['DOMAIN_NAME'])
+  groups = jots.pyauth.group.find_user_in_group(user.properties.userId)
+
+  group_links = list()
+  if "admin" in groups.keys():
+    group_links.append({"name": "user admin", "url": "/admin/users"})
+    group_links.append({"name": "group admin", "url": "/admin/groups"})
+
+  for group in groups.keys():
+    group_obj = jots.pyauth.group.group(group_name=group, db=DB_CON)
+    if "url" in group_obj.properties.as_dict():
+      group_links.append({"name": group, "url": group_obj.properties.url})
+
+  return render_template("page.tmpl", api_url=app.config['DOMAIN_NAME'], groups=group_links)
 
 

@@ -1,4 +1,5 @@
 import uuid
+import copy
 
 from . import mongo
 
@@ -41,6 +42,12 @@ class group_properties(object):
 
   def __setattr__(self, name, value):
     raise GroupPropertyError("set property", "group properties are read-only, use update methods")
+
+  def as_dict(self):
+    attr_as_dict = copy.deepcopy(self.__dict__)
+    if "password" in attr_as_dict:
+      del attr_as_dict['password']
+    return attr_as_dict
 
 
 class group(object):
