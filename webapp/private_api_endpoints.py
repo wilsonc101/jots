@@ -264,7 +264,7 @@ def api_groupmember_remove(group_id):
 
   try:
     group = jots.pyauth.group.group(group_id=group_id, db=DB_CON)
-    new_member_list = group.remove_member(user_id=user_id)
+    new_member_list = group.remove_member(user_id=user_id, force=True)
   except jots.pyauth.group.GroupNotFound:
     raise error_handlers.InvalidUsage("group not found", status_code=400)
   except jots.pyauth.group.InputError as err:

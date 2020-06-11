@@ -198,6 +198,9 @@
               success: function (result){
                 for (var key in result) {
                   if (result.hasOwnProperty(key)) {           
+                    if ( result[key] == "" ) {
+                      result[key] = key;
+                    }
                     $("#members-table").append('<tr class="table-light">' + 
                       '<td>' + result[key] + '</td>' + 
                       '<td><button class="btn btn-sm btn-outline-primary mr-2" onclick="delete_member(this);" data-groupid="' + group_id + '" data-userid="' + key + '">Delete</button>' +

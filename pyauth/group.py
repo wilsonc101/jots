@@ -21,6 +21,11 @@ class GroupPropertyError(Error):
     self.expression = expression
     self.message = message
 
+class GroupMemberError(Error):
+  def __init__(self, expression, message):
+    self.expression = expression
+    self.message = message
+
 class GroupNotFound(Error):
   def __init__(self, expression, message):
     self.expression = expression
@@ -111,21 +116,20 @@ class group(object):
     for user_id in self.properties.members:
       try:
         user_doc = self.db.get_user_by_id(user_id)
-        if user_doc is None:
-          raise GroupActionError("group member", "could not get details, user does not exist")
       except mongo.RecordError as err:
         raise GroupActionError("group member", err.message)
 
-      if attribute is not None:
+      if user_doc is None:
+          user_details[user_id] = str()
+      elif user_doc is not None and attribute is not None:
         if attribute in user_doc:
           user_details[user_id] = user_doc[attribute]
         else:
           user_details[user_id] = str()
-      else:
+      elif user_doc is not None and attribute is None:
         # Drop Mongo doc ID before setting properties
         if "_id" in user_doc:
           del user_doc['_id']
-
         user_details[user_id] = user_doc
 
     return user_details

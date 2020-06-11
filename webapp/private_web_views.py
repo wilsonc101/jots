@@ -1,5 +1,6 @@
 import html
 import sys
+from urllib.parse import urlparse
 
 from flask import Flask, request, render_template, jsonify, make_response, redirect
 from flask_jwt_extended import (
@@ -41,11 +42,16 @@ def refresh_get():
   current_user = get_jwt_identity()
   access_token = create_access_token(identity=current_user)
 
-  print("---------------------------------------")
-  print(str(request.headers))
-  print("---------------------------------------")
-
   if "request_path" in request.args:
+    referrer_path = request.args.get("request_path")
+    # if // or . is given, assumption is that it is a domain name so must be checked
+    if "//" in referrer_path or "." in referrer_path:
+      # Don't redirect to sites that don't share the same root domain.
+      parsed_url = urlparse(referrer_path)
+      domain_name = '{url.scheme}://{url.netloc}'.format(url=parsed_url)
+      if app.config['DOMAIN_NAME'] not in domain_name:
+        raise error_handlers.InvalidUsage("out of domain request", status_code=403)
+
     request_path = html.escape(request.args.get("request_path"))
   else:
     request_path = "/page"

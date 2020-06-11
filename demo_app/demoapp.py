@@ -23,6 +23,9 @@ app.config['JWT_COOKIE_SECURE'] = True
 app.config['JWT_COOKIE_SAMESITE'] = "lax"
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 30
+app.config['JWT_LOGIN_URL'] = "https://dev.localhost:5000/"
+app.config['JWT_REFRESH_URL'] = "https://dev.localhost:5000/token/refresh"
+
 
 jwt = JWTManager(app)
 
@@ -32,15 +35,35 @@ def expired_token_callback(token):
   token_type = token['type']
   if token_type == "access":
     print("access token has expired - goto refresh")
-    return redirect("https://dev.localhost:5000/token/refresh", code=307)
+    return redirect("{}?request_path={}".format(app.config['JWT_REFRESH_URL'], request.url), code=307)
 
   elif token_type == "refresh":
     print("refresh token has expired - goto root/login")
-    response = make_response(redirect("https://dev.localhost:5000/"))
+    response = make_response(redirect("{}".format(app.config['JWT_LOGIN_URL'])))
     return response
 
   else:
     raise InvalidUsage("unknown token type", status_code=403)
+
+@jwt.needs_fresh_token_loader
+def fresh_token_loader_callback():
+  print("token is not fresh - goto refresh")
+  return redirect("{}?request_path={}".format(app.config['JWT_REFRESH_URL'], request.url), code=307)
+
+
+@jwt.invalid_token_loader
+def invalid_token_callback():
+  print("token is invalid - goto root/login")
+  response = make_response(redirect("{}".format(app.config['JWT_LOGIN_URL'])))
+  return response
+
+
+@jwt.unauthorized_loader
+def missing_token_callback(token):
+  print("token is missing - goto root/login")
+  response = make_response(redirect("{}".format(app.config['JWT_LOGIN_URL'])))
+  return response
+
 
 
 @app.route('/')
