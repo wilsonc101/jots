@@ -51,6 +51,7 @@ def login_form():
   if not result:
     raise error_handlers.InvalidUsage("access denied", status_code=403)
 
+  # Add user claims - groups, all except admin
   group_data = jots.pyauth.group.find_user_in_group(user.properties.userId, db=DB_CON)
   group_names = list()
   for group in group_data.keys():

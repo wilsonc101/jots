@@ -41,6 +41,10 @@ def refresh_get():
   current_user = get_jwt_identity()
   access_token = create_access_token(identity=current_user)
 
+  print("---------------------------------------")
+  print(str(request.headers))
+  print("---------------------------------------")
+
   if "request_path" in request.args:
     request_path = html.escape(request.args.get("request_path"))
   else:
