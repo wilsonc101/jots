@@ -50,13 +50,13 @@ class app_properties(object):
 
   def as_dict(self):
     attr_as_dict = copy.deepcopy(self.__dict__)
-    if "password" in attr_as_dict:
-      del attr_as_dict['password']
+    if "secret" in attr_as_dict:
+      del attr_as_dict['secret']
     return attr_as_dict
 
 
 class app(object):
-  def __init__(self, app_id=None, db=None):
+  def __init__(self, app_name=None, app_id=None, db=None):
     ''' Uses supplied ID  to find mongo record
         Dynamically populates class properties with mongo document content
     '''
@@ -66,12 +66,17 @@ class app(object):
     else:
       self.db = db
 
-    if app_id is None:
-      raise InputError("get app", "app id not given")
+    if app_name is None and app_id is None:
+      raise InputError("get app", "app id or name is required")
 
-    _check_user_string(app_id, is_uuid=True)
+    if app_name is not None:
+      _check_user_string(app_name)
+      app_details = self.db.get_app_by_name(app_name)
 
-    app_details = self.db.get_app_by_id(app_id)
+    elif app_id is not None:
+      _check_user_string(app_id, is_uuid=True)
+      app_details = self.db.get_app_by_id(app_id)
+
     if app_details is None:
       raise AppNotFound("get app", "app not found")
 
@@ -82,8 +87,15 @@ class app(object):
     self.properties = app_properties(app_details)
 
 
-  def authenticate(self, password):
-    pass
+  def authenticate(self, secret):
+    secret = secret.encode('urf-8')
+    try:
+      result = bcrypt.checkpw(secret, self.properties.secret)
+      return result
+
+    except AttributeError:
+      # Secret is not set
+      return False
 
 
   def update(self, **kwargs):
@@ -91,7 +103,7 @@ class app(object):
 
 
 def _check_user_string(user_string, is_uuid=False):
-  illegal_chars = ["$", ";", ","]
+  illegal_chars = ["$", ";", ",", "(", ")"]
   for char in user_string:
     if char in illegal_chars:
       raise InputError("check", "bad string")
@@ -109,6 +121,36 @@ def _check_user_string(user_string, is_uuid=False):
 def delete_app(app_id, db=None):
   pass
 
-def create_app(service_domain, db=None):
-  pass
+
+def create_app(name, attributes=None, db=None):
+  if not name:
+    raise InputError("new app", "name not give")
+  _check_user_string(name)
+
+  if attributes is not None:
+    if not isinstance(attributes, dict):
+      raise InputError("new app", "attributes must be a dict")
+
+    for attribute_name in attributes.keys():
+      _check_user_string(attribute_name)
+      _check_user_string(attributes[attribute_name])
+  else:
+    attributes = dict()
+
+  app_id = str(uuid.uuid4())
+  app_key = "".join([random.choice(string.ascii_lowercase + string.digits) for n in range(32)])
+  app_secret = "".join([random.choice(string.ascii_letters + string.digits + string.punctuation) for n in range(48)])
+
+  app_fields = {"appId": app_id,
+                "appName", name,
+                "key": app_key,
+                "secret": bcrypt.hashpw(app_secret.encode('utf-8'), bcrypt.gensalt())
+                "attributes": attributes}
+
+  try:
+    doc_id = db.create_app(app_fields)
+    return (app_key, app_secret)
+
+  except mongo.DuplicateApp:
+    raise UserActionError("new app", "app already exists")
 

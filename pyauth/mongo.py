@@ -31,6 +31,11 @@ class DuplicateGroup(Error):
     self.expression = expression
     self.message = message
 
+class DuplicateApp(Error):
+  def __init__(self, expression, message):
+    self.expression = expression
+    self.message = message
+
 
 class mongo(object):
   def __init__(self, mongo_host=None, mongo_port=None):
@@ -55,19 +60,26 @@ class mongo(object):
       self.db = self.client.pyauth
       self.users_collection = self.db.users
       self.groups_collection = self.db.groups
+      self.apps_collection = self.db.apps
 
       self.users_collection.create_index("email", unique=True)
       self.groups_collection.create_index("groupName", unique=True)
+      self.apps_collection.create_index("appName", unique=True)
     except pymongo.errors.ConnectionFailure:
       raise ConnectionError("new connection", "could not connect to host")
 
   def clear_collections(self):
     self.users_collection.drop()
     self.groups_collection.drop()
+    self.apps_collection.drop()
+
     self.users_collection = self.db.users
     self.groups_collection = self.db.groups
+    self.apps_collection = self.db.apps
+
     self.users_collection.create_index("email", unique=True)
     self.groups_collection.create_index("groupName", unique=True)
+    self.apps_collection.create_index("appName", unique=True)
 
 
   def create_user(self, data):
@@ -232,3 +244,38 @@ class mongo(object):
       groups.append((doc['groupId'], doc['groupName']))
 
     return groups
+
+
+  def create_app(self, data):
+    try:
+      doc_id = self.apps_collection.insert_one(data).inserted_id
+      return doc_id
+
+    except pymongo.errors.DuplicateKeyError:
+      raise DuplicateApp("create app", "an app exists with this name")
+
+
+  def get_app_by_id(self, app_id):
+    documents = self.apps_collection.find({"appId": app_id})
+    documents = list(documents)
+
+    if len(documents) > 1:
+      raise RecordError("get app", "to many records returned")
+
+    elif len(documents) == 0:
+      return None
+
+    return documents[0]
+
+
+  def get_app_by_name(self, app_name):
+    documents = self.apps_collection.find({"appName": app_name})
+    documents = list(documents)
+
+    if len(documents) > 1:
+      raise RecordError("get app", "to many records returned")
+
+    elif len(documents) == 0:
+      return None
+
+    return documents[0]

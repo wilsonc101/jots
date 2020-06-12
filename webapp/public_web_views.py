@@ -43,3 +43,10 @@ def reset():
 
   return render_template("reset.tmpl", reset_code=reset_code)
 
+
+@app.route('/token/new')
+def token_get():
+  return render_template("login.tmpl", api_url=app.config['DOMAIN_NAME'])
+
+
+
