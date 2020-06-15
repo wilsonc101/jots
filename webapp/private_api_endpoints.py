@@ -15,6 +15,7 @@ from jots.webapp import error_handlers
 
 import jots.pyauth.user
 import jots.pyauth.group
+import jots.pyauth.app
 
 
 def _check_group_permission(group_name, user_id):
@@ -435,6 +436,36 @@ def api_user_delete():
     raise error_handlers.InvalidUsage(err.message, status_code=400)
 
 
+@app.route('/api/v1/apps/find', methods=['POST'])
+@jwt_required
+def api_findapps():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
 
+  # Reject non-JSON payload
+  if not request.json:
+    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
 
+  request_content = request.get_json()
+  if 'appname' not in request_content:
+    raise error_handlers.InvalidUsage("bad payload", status_code=400)
 
+  app_name = html.escape(request_content['appname'])
+
+  username = get_jwt_identity()
+  try:
+    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("invalid user", status=403)
+
+  _check_group_permission("admin", user.properties.userId)
+
+  try:
+    response = jots.pyauth.app.find_apps_like(app_name, db=DB_CON)
+    return jsonify(response)
+
+  except jots.pyauth.app.AppNotFound:
+    return jsonify(dict())

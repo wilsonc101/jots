@@ -7,6 +7,7 @@ import string
 import copy
 
 from . import mongo
+#import mongo
 
 
 class Error(Exception):
@@ -119,10 +120,27 @@ def _check_user_string(user_string, is_uuid=False):
 
 
 def delete_app(app_id, db=None):
-  pass
+  if db is None:
+    # This assumes host and port have been set in envvars
+    db = mongo.mongo()
+
+  if not app_id:
+    raise InputError("delete app", "app id not given")
+
+  _check_user_string(app_id, is_uuid=True)
+
+  try:
+    result = db.delete_app(app_id=app_id)
+    return result
+  except mongo.RecordError as err:
+    raise AppActionError("delete app", err.message)
 
 
 def create_app(name, attributes=None, db=None):
+  if db is None:
+    # This assumes host and port have been set in envvars
+    db = mongo.mongo()
+
   if not name:
     raise InputError("new app", "name not give")
   _check_user_string(name)
@@ -142,15 +160,34 @@ def create_app(name, attributes=None, db=None):
   app_secret = "".join([random.choice(string.ascii_letters + string.digits + string.punctuation) for n in range(48)])
 
   app_fields = {"appId": app_id,
-                "appName", name,
+                "appName": name,
                 "key": app_key,
-                "secret": bcrypt.hashpw(app_secret.encode('utf-8'), bcrypt.gensalt())
+                "secret": bcrypt.hashpw(app_secret.encode('utf-8'), bcrypt.gensalt()),
                 "attributes": attributes}
 
   try:
     doc_id = db.create_app(app_fields)
-    return (app_key, app_secret)
+    return (app_id, app_key, app_secret)
 
   except mongo.DuplicateApp:
-    raise UserActionError("new app", "app already exists")
+    raise AppActionError("new app", "app already exists")
+
+
+def find_apps_like(app_name, db=None):
+  if db is None:
+    # This assumes host and port have been set in envvars
+    db = mongo.mongo()
+
+  if not app_name:
+    raise InputError("app", "app name required")
+
+  _check_user_string(app_name)
+
+  apps = db.find_apps_by_name(app_name)
+
+  app_data = dict()
+  for app_id, app_name in apps:
+    app_data[app_name] = app_id
+
+  return app_data
 

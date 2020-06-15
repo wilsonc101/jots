@@ -145,7 +145,7 @@ class mongo(object):
       raise RecordError("delete user", "unexpected number of documents deleted")
 
     elif result.deleted_count == 0:
-      raise RecordError("delete user", "no documents to deleted")
+      raise RecordError("delete user", "no documents to be deleted")
 
     else:
       return True
@@ -229,7 +229,7 @@ class mongo(object):
       raise RecordError("delete group", "unexpected number of documents deleted")
 
     elif result.deleted_count == 0:
-      raise RecordError("delete group", "no documents to deleted")
+      raise RecordError("delete group", "no documents to be deleted")
 
     else:
       return True
@@ -279,3 +279,30 @@ class mongo(object):
       return None
 
     return documents[0]
+
+
+  def delete_app(self, app_id):
+    result = self.apps_collection.delete_one({"appId": str(app_id)})
+
+    if result.deleted_count > 1:
+      raise RecordError("delete app", "unexpected number of documents deleted")
+
+    elif result.deleted_count == 0:
+      raise RecordError("delete app", "no documents to be deleted")
+
+    else:
+      return True
+
+
+  def find_apps_by_name(self, app_name):
+    ''' Use basic regex to find names like that supplied
+        Returns list of tuples: (ID, name)
+    '''
+    regex = re.compile('.*{}.*'.format(app_name))
+    docs = self.apps_collection.find({'appName': regex})
+
+    apps = list()
+    for doc in docs:
+      apps.append((doc['appId'], doc['appName']))
+
+    return apps

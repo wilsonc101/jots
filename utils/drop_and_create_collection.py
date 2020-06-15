@@ -10,6 +10,11 @@ col_u.drop()
 col_g = db.groups
 col_g.drop()
 
+col_a = db.apps
+col_a.drop()
+
+col_a = db.apps
+
 col_u = db.users
 col_u.create_index("email", unique=True)
 

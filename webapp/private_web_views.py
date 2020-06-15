@@ -97,6 +97,23 @@ def page_admin_user():
   return render_template("user_admin.tmpl", api_url=app.config['DOMAIN_NAME'])
 
 
+@app.route('/admin/apps')
+@jwt_required
+def page_admin_app():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
+  username = get_jwt_identity()
+  user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+
+  _check_group_permission("admin", user.properties.userId)
+
+  return render_template("app_admin.tmpl", api_url=app.config['DOMAIN_NAME'])
+
+
 @app.route('/page')
 @jwt_required
 def page():

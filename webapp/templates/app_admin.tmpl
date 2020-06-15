@@ -10,13 +10,13 @@
     <div class="pt-2 tab-pane" id="resultstab">
       <div class="row">
         <div class="col-md">
-          <h3>Admin - User Management</h3>
+          <h3>Admin - App Management</h3>
         </div>
       </div>
       <div class="row">
         <div class="col-md">
           <div class="input-group">
-            <input type="text" class="form-control mr-2" id="search-email"> 
+            <input type="text" class="form-control mr-2" id="search-appname"> 
             <button class="btn btn-primary mb-2 mr-2" id="search-btn">Search</button>
           </div>
         </div>
@@ -29,7 +29,7 @@
           <table class="table">
             <thead>
               <tr>
-                <th scope="col">Email Address</th>
+                <th scope="col">App Name</th>
                 <th scope="col">Actions</th>
               </tr>
             </thead>
@@ -45,55 +45,6 @@
   </div>
 
 
-  <!-- User Edit Modal -->
-  <div id="modal-useredit" class="modal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-
-        <div class="modal-header">
-          <h5 class="modal-title" id="title-useredit"></h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <div class="row">
-            <div class="col-md">
-              <div id="edituser-modal-alerts">
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md">
-              <label for="useredit-userid">User ID</label>
-              <div class="input-group">
-                <input type="text" class="form-control mr-2" id="useredit-userid" readonly>
-              </div>
-              <label class="mt-3" for="useredit-email">Email Address</label>
-              <div class="input-group">
-                <input type="text" class="form-control mr-2" id="useredit-email">
-              </div>
-              <label class="mt-3" for="useredit-status">Status</label>
-              <div class="input-group">
-                <input type="text" class="form-control mr-2" id="useredit-status">
-                  <div class="input-group-append" id="useredit-status-button">
-                  </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-
-
   <!-- Bootstrap JavaScript & JQuery -->
   <script src={{ url_for('static', filename='jquery.js') }}></script>
   <script src={{ url_for('static', filename='bootstrap.js') }}></script>
@@ -106,23 +57,22 @@
     }
 
     $("#search-btn").click(function(){
-      var email_address = $("#search-email").val();
+      var app_name = $("#search-appname").val();
       $("#results-table").empty()
       var check_result = $.ajax({
-              url: "https://{{ api_url }}:5000/api/v1/users/find",
+              url: "https://{{ api_url }}:5000/api/v1/apps/find",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",
               dataType:"json",
-              data: JSON.stringify({"email": email_address}),
+              data: JSON.stringify({"appname": app_name}),
               success: function (result){
                 for (var key in result) {
                   if (result.hasOwnProperty(key)) {           
                     $("#results-table").append('<tr class="table-light" id="' + result[key] +'">' + 
                       '<td>' + key + '</td>' + 
-                      '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-useredit" data-email="' + 
-                         key + '" data-userid="' + result[key] + '">Edit</button>' +
-                      '<button class="btn btn-sm btn-outline-danger mr-2" onclick="delete_user(this);" data-userid="' + result[key] + '">Delete</button>' +
+                      '<td><button class="btn btn-sm btn-outline-primary mr-2" onclick="show_key(this);" data-appid="' + result[key] + '">Show Key</button>' +
+                      '<button class="btn btn-sm btn-outline-danger mr-2" onclick="delete_app(this);" data-appid="' + result[key] + '">Delete</button>' +
                       '</td></tr>')
                   }
                 }
@@ -142,88 +92,18 @@
     })
 
 
-    $('#modal-useredit').on('show.bs.modal', function(e) {
-      var user_email = e.relatedTarget.dataset.email;
-      var user_id = e.relatedTarget.dataset.userid;
-      $('#title-useredit').html("Edit user - " + user_email);
-      $('#useredit-userid').val(user_id);
-      $('#useredit-email').val(user_email);
+    function delete_app(button) {
+      var app_id = $(button).data("appid");
 
       var check_result = $.ajax({
-              url: "https://{{ api_url }}:5000/api/v1/users/" + user_id  + "/details",
-              type: "GET",
-              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
-              success: function (result){
-                for (var key in result) {
-                  if (result.hasOwnProperty(key)) {
-                     if (key == "status") {
-                       $('#useredit-status').val(result[key]);
-                       if ((result[key] == "active") || (result[key] == "reset") || (result[key] == "new")) {
-                         $("#useredit-status-button").append('<button class="btn btn-outline-secondary" data-action="reset" data-userid="' + user_id + '"' +
-                            ' onclick="change_user_status(this);" "type="button">Reset</button>')
-                         $("#useredit-status-button").append('<button class="btn btn-outline-secondary" data-action="disabled" data-userid="' + user_id + '"' +
-                            ' onclick="change_user_status(this);" type="button">Disable</button>')
-                       } else if (result[key] == "disabled") {
-                         $("#useredit-status-button").append('<button class="btn btn-outline-secondary" data-action="reset" data-userid="' + user_id + '"' +
-                            ' onclick="change_user_status(this);" "type="button">Reset</button>')
-                       }
-                     }
-                  }
-                }
-              },
-              error: function (result){
-                console.log(result);
-              }
-      });
-    })
-
-    $('#modal-useredit').on('hidden.bs.modal', function(e) {
-      $("#useredit-status-button").empty();
-    })
-
-
-    function change_user_status(button) {
-      var user_id = $(button).data("userid");
-      var action = $(button).data("action");
-
-      var check_result = $.ajax({
-              url: "https://{{ api_url }}:5000/api/v1/users/" + user_id + "/set/status",
+              url: "https://{{ api_url }}:5000/api/v1/apps/delete",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",
               dataType:"json",
-              data: JSON.stringify({"value": action}),
+              data: JSON.stringify({"appid": app_id}),
               success: function (result){
-                $('#useredit-status').val(result['new_value']);
-              },
-              error: function (result){
-                $("#edituser-modal-alerts").empty()
-                $("#edituser-modal-alerts").append('<div id="ajax-page-error" class="alert alert-danger" role="alert">' +
-                                           'Could not change user status' +
-                                           '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
-                                           '<span aria-hidden="true">&times;</span>' +
-                                           '</button>' +
-                                           '</div>')
-                $("#ajax-page-error").alert()
-                console.log(result);
-              }
-      });
-
-    }
-
-
-    function delete_user(button) {
-      var user_id = $(button).data("userid");
-
-      var check_result = $.ajax({
-              url: "https://{{ api_url }}:5000/api/v1/users/delete",
-              type: "POST",
-              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
-              contentType:"application/json; charset=utf-8",
-              dataType:"json",
-              data: JSON.stringify({"userid": user_id}),
-              success: function (result){
-                $("#" + user_id).remove();
+                $("#" + app_id).remove();
               },
               error: function (result){
                 $("#page-alerts").empty()
