@@ -157,7 +157,7 @@ def create_app(name, attributes=None, db=None):
 
   app_id = str(uuid.uuid4())
   app_key = "".join([random.choice(string.ascii_lowercase + string.digits) for n in range(32)])
-  app_secret = "".join([random.choice(string.ascii_letters + string.digits + string.punctuation) for n in range(48)])
+  app_secret = "".join([random.choice(string.ascii_letters + string.digits) for n in range(64)])
 
   app_fields = {"appId": app_id,
                 "appName": name,

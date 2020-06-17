@@ -18,6 +18,7 @@
           <div class="input-group">
             <input type="text" class="form-control mr-2" id="search-appname"> 
             <button class="btn btn-primary mb-2 mr-2" id="search-btn">Search</button>
+            <button class="btn btn-secondary mb-2" id="create-btn" data-toggle="modal" data-target="#modal-appcreate">Create</button>
           </div>
         </div>
         <div class="col-md" id="search-query-error">
@@ -43,6 +44,80 @@
 
   <div id="page-alerts">
   </div>
+
+  <!-- App Create Modal -->
+  <div id="modal-appcreate" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">New App</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md">
+              <div id="createapp-modal-alerts">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md">
+              <div class="input-group">
+                <input type="text" class="form-control mr-2" id="appcreate-name">
+                <button class="btn btn-primary mb-2" id="appcreate-add-btn">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- New App Data Modal -->
+  <div id="modal-newappdata" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">New App Details</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md">
+              <p><strong>Once this window is closed the app secret will not be visiable again - make a record of it now</strong></p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md">
+              <label for="newapp-name">Name</label>
+              <div class="input-group">
+                <input readonly type="text" class="form-control mr-2" id="newapp-name">
+              </div>
+              <label for="newapp-key" class="mt-2">App Key</label>
+              <div class="input-group">
+                <input readonly type="text" class="form-control mr-2" id="newapp-key">
+              </div>
+              <label for="newapp-secret" class="mt-2">App Secret</label>
+              <div class="input-group">
+                <textarea readonly class="form-control mr-2" id="newapp-secret"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
 
 
   <!-- Bootstrap JavaScript & JQuery -->
@@ -119,6 +194,70 @@
       });
 
     }
+
+
+    $("#appcreate-add-btn").click(function(){
+      var app_name = $("#appcreate-name").val();
+      console.log("create - " + app_name);
+      var check_result = $.ajax({
+              url: "https://{{ api_url }}:5000/api/v1/apps/new",
+              type: "POST",
+              headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
+              contentType:"application/json; charset=utf-8",
+              dataType:"json",
+              data: JSON.stringify({"appname": app_name}),
+              success: function (result){
+                for (var key in result) {
+                  if (result.hasOwnProperty(key)) {
+                    console.log(result[key]['id']);
+                    console.log(result[key]['key']);
+                    console.log(result[key]['secret']);
+                    $("#results-table").append('<tr class="table-light" id="' + result[key]['id'] +'">' + 
+                      '<td>' + key + '</td>' + 
+                      '<td><button class="btn btn-sm btn-outline-primary mr-2" onclick="show_key(this);" data-appid="' + result[key]['id'] + '">Show Key</button>' +
+                      '<button class="btn btn-sm btn-outline-danger mr-2" onclick="delete_app(this);" data-appid="' + result[key]['id'] + '">Delete</button>' +
+                      '</td></tr>')
+                    $("#newapp-name").val(key);
+                    $("#newapp-key").val(result[key]['key']);
+                    $("#newapp-secret").val(result[key]['secret']);
+                  }
+                }
+
+                $("#modal-appcreate").modal('hide');
+                $("#modal-appcreate").modal('dispose');
+                $('#modal-newappdata').modal('show')
+              },
+              error: function (result){
+                $("#createapp-modal-alerts").empty()
+                $("#createapp-modal-alerts").append('<div id="ajax-modal-error" class="alert alert-danger" role="alert">' +
+                                           'Could not create app -  ' + app_name +
+                                           '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                                           '<span aria-hidden="true">&times;</span>' +
+                                           '</button>' +
+                                           '</div>')
+                $("#ajax-modal-error").alert()
+                console.log("");
+              }
+      });
+
+    })
+
+
+    $('#modal-appcreate').on('hidden.bs.modal', function(e) {
+      $("#appcreate-name").val("");
+      $("#ajax-modal-error").alert('close');
+    })
+
+    $('#modal-newappdata').on('hidden.bs.modal', function(e) {
+      $("#newapp-name").val("");
+      $("#newapp-key").val("");
+      $("#newapp-secret").val("");
+      $("#ajax-modal-error").alert('close');
+    })
+
+
+
+
 
   </script>
 

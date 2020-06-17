@@ -1,6 +1,7 @@
 import html
 import sys
 import datetime
+import base64
 
 from flask import Flask, request, render_template, jsonify, make_response, redirect
 from flask_jwt_extended import (
@@ -218,4 +219,19 @@ def api_passwordreset():
   return jsonify({"status": "ok",
                   "reset_code": reset_code})
 
+
+@app.route('/token/new')
+def token_get():
+  if 'Authorization' not in request.headers:
+    raise error_handlers.InvalidUsage("missing autorization header", status_code=400)
+
+  auth_header = request.headers.get('Authorization')
+  b64_auth_content = base64.b64decode(auth_header).decode('utf-8').strip()
+
+  if ":" not in b64_auth_content:
+    raise error_handlers.InvalidUsage("bad autorization header", status_code=400)
+
+  key, secret = b64_auth_content.split(":")
+  return "{} -- {}".format(key, secret)
+#  return render_template("login.tmpl", api_url=app.config['DOMAIN_NAME'])
 
