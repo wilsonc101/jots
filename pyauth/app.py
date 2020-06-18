@@ -57,7 +57,7 @@ class app_properties(object):
 
 
 class app(object):
-  def __init__(self, app_name=None, app_id=None, db=None):
+  def __init__(self, app_name=None, app_id=None, app_key=None, db=None):
     ''' Uses supplied ID  to find mongo record
         Dynamically populates class properties with mongo document content
     '''
@@ -67,7 +67,7 @@ class app(object):
     else:
       self.db = db
 
-    if app_name is None and app_id is None:
+    if app_name is None and app_id is None and app_key is None:
       raise InputError("get app", "app id or name is required")
 
     if app_name is not None:
@@ -77,6 +77,10 @@ class app(object):
     elif app_id is not None:
       _check_user_string(app_id, is_uuid=True)
       app_details = self.db.get_app_by_id(app_id)
+
+    elif app_key is not None:
+      _check_user_string(app_key)
+      app_details = self.db.get_app_by_key(app_key)
 
     if app_details is None:
       raise AppNotFound("get app", "app not found")
@@ -89,7 +93,7 @@ class app(object):
 
 
   def authenticate(self, secret):
-    secret = secret.encode('urf-8')
+    secret = secret.encode('utf-8')
     try:
       result = bcrypt.checkpw(secret, self.properties.secret)
       return result

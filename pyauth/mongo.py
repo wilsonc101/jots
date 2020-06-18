@@ -281,6 +281,19 @@ class mongo(object):
     return documents[0]
 
 
+  def get_app_by_key(self, app_key):
+    documents = self.apps_collection.find({"key": app_key})
+    documents = list(documents)
+
+    if len(documents) > 1:
+      raise RecordError("get app", "to many records returned")
+
+    elif len(documents) == 0:
+      return None
+
+    return documents[0]
+
+
   def delete_app(self, app_id):
     result = self.apps_collection.delete_one({"appId": str(app_id)})
 

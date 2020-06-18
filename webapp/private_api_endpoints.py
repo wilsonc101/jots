@@ -169,11 +169,25 @@ def api_groupmembers(group_id):
 
   group_id = html.escape(group_id)
 
-  username = get_jwt_identity()
+  # Extract requesters identidy and confirm it's a valid user or app
+  requester_id = get_jwt_identity()
   try:
-    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+    # Exceptions as 'passed' as they will be picked up by app check
+    user_obj = None
+    user_obj = jots.pyauth.user.user(email_address=requester_id, db=DB_CON)
+    _check_group_permission("admin", user_obj.properties.userId)
   except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
+    pass
+  except jots.pyauth.user.InputError:
+    pass
+
+  if not user_obj:
+    try:
+      app_obj = jots.pyauth.app.app(app_name=requester_id, db=DB_CON)
+    except jots.pyauth.app.AppNotFound:
+      raise error_handlers.InvalidUsage("invalid requestor id", status=403)
+    except jots.pyauth.user.InputError:
+      raise error_handlers.InvalidUsage("invalid requestor id", status=403)
 
   try:
     group = jots.pyauth.group.group(group_id=group_id, db=DB_CON)
@@ -326,12 +340,25 @@ def api_user_details(user_id):
   else:
     DB_CON = None
 
-  req_username = get_jwt_identity()
+  # Extract requesters identidy and confirm it's a valid user or app
+  requester_id = get_jwt_identity()
   try:
-    req_user = jots.pyauth.user.user(email_address=req_username, db=DB_CON)
+    # Exceptions as 'passed' as they will be picked up by app check
+    user_obj = None
+    user_obj = jots.pyauth.user.user(email_address=requester_id, db=DB_CON)
+    _check_group_permission("admin", user_obj.properties.userId)
   except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
-  _check_group_permission("admin", req_user.properties.userId)
+    pass
+  except jots.pyauth.user.InputError:
+    pass
+
+  if not user_obj:
+    try:
+      app_obj = jots.pyauth.app.app(app_name=requester_id, db=DB_CON)
+    except jots.pyauth.app.AppNotFound:
+      raise error_handlers.InvalidUsage("invalid requestor id", status=403)
+    except jots.pyauth.user.InputError:
+      raise error_handlers.InvalidUsage("invalid requestor id", status=403)
 
   user_id = html.escape(user_id)
 

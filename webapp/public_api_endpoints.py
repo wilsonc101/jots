@@ -226,12 +226,35 @@ def token_get():
     raise error_handlers.InvalidUsage("missing autorization header", status_code=400)
 
   auth_header = request.headers.get('Authorization')
+  if "Basic " in auth_header:
+    auth_header = auth_header.split("Basic ")[1]
+
   b64_auth_content = base64.b64decode(auth_header).decode('utf-8').strip()
 
   if ":" not in b64_auth_content:
     raise error_handlers.InvalidUsage("bad autorization header", status_code=400)
 
   key, secret = b64_auth_content.split(":")
+  try:
+    app_obj = jots.pyauth.app.app(app_key=key)
+  except jots.pyauth.app.AppNotFound:
+    raise error_handlers.InvalidUsage("bad app", status_code=400)
+  except jots.pyauth.app.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+  if app_obj.authenticate(secret):
+    expires = datetime.timedelta(days=30)
+    access_token = create_access_token(identity=app_obj.properties.appName, expires_delta=expires)
+    return access_token
+  else:
+    raise error_handlers.InvalidUsage("permission denied", status_code=403)
+
+
   return "{} -- {}".format(key, secret)
 #  return render_template("login.tmpl", api_url=app.config['DOMAIN_NAME'])
+
+
+
+
+
 

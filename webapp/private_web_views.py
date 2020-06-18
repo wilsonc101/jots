@@ -144,3 +144,7 @@ def page():
   return render_template("page.tmpl", api_url=app.config['DOMAIN_NAME'], groups=group_links)
 
 
+@app.route('/demo')
+@jwt_required
+def demo():
+  return str(request.headers)
