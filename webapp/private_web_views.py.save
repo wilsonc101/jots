@@ -1,7 +1,6 @@
 import html
 import sys
 from urllib.parse import urlparse
-
 from functools import wraps
 
 from flask import Flask, request, render_template, jsonify, make_response, redirect
@@ -30,13 +29,14 @@ def protected_view(func):
 
   @wraps(func)
   def wrapper(*args, **kwargs):
-    username = get_jwt_identity()
     try:
+      username = get_jwt_identity()
       user = jots.pyauth.user.user(email_address=username, db=DB_CON)
     except jots.pyauth.user.UserNotFound:
-      raise error_handlers.InvalidUsage("access denied", status_code=403)
+      pass
     except jots.pyauth.user.InputError:
-      raise error_handlers.InvalidUsage("access denied", status_code=403)
+      pass
+
 
     try:
       group = jots.pyauth.group.group(group_name="admin", db=DB_CON)
@@ -82,20 +82,47 @@ def refresh_get():
 @jwt_required
 @protected_view
 def page_admin_group():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
+
   return render_template("group_admin.tmpl", api_url=app.config['DOMAIN_NAME'])
 
 
 @app.route('/admin/users')
 @jwt_required
-@protected_view
 def page_admin_user():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
+  username = get_jwt_identity()
+  user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+
+  _check_group_permission("admin", user.properties.userId)
+
   return render_template("user_admin.tmpl", api_url=app.config['DOMAIN_NAME'])
 
 
 @app.route('/admin/apps')
 @jwt_required
-@protected_view
 def page_admin_app():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
+  username = get_jwt_identity()
+  user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+
+  _check_group_permission("admin", user.properties.userId)
+
   return render_template("app_admin.tmpl", api_url=app.config['DOMAIN_NAME'])
 
 
@@ -132,6 +159,4 @@ def page():
 @app.route('/demo')
 @jwt_required
 def demo():
-  ''' Text return for testing app calls
-  '''
   return str(request.headers)
