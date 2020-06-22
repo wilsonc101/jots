@@ -129,7 +129,7 @@ def page():
 
   username = get_jwt_identity()
   user = jots.pyauth.user.user(email_address=username, db=DB_CON)
-  groups = jots.pyauth.group.find_user_in_group(user.properties.userId)
+  groups = jots.pyauth.group.find_user_in_group(user.properties.userId, db=DB_CON)
 
   group_links = list()
   if "admin" in groups.keys():

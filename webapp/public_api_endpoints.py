@@ -250,10 +250,6 @@ def token_get():
     raise error_handlers.InvalidUsage("permission denied", status_code=403)
 
 
-  return "{} -- {}".format(key, secret)
-#  return render_template("login.tmpl", api_url=app.config['DOMAIN_NAME'])
-
-
 
 
 

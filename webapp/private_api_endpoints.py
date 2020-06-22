@@ -2,6 +2,8 @@ import html
 import sys
 import datetime
 
+from functools import wraps
+
 from flask import Flask, request, render_template, jsonify, make_response, redirect
 from flask_jwt_extended import (
     JWTManager, jwt_required, jwt_optional, jwt_refresh_token_required,
@@ -12,10 +14,45 @@ from flask_jwt_extended import (
 
 from jots.webapp import app
 from jots.webapp import error_handlers
+from jots.mailer import send as mailer
 
 import jots.pyauth.user
 import jots.pyauth.group
 import jots.pyauth.app
+
+def protected_view(func):
+  ''' Decorator for views only accessible to administrators or apps
+  '''
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
+  @wraps(func)
+  def wrapper(*args, **kwargs):
+    # Extract requesters identidy and confirm it's a valid user or app
+    requester_id = get_jwt_identity()
+    try:
+      # Exceptions as 'passed' as they will be picked up by app check
+      user_obj = None
+      user_obj = jots.pyauth.user.user(email_address=requester_id, db=DB_CON)
+      _check_group_permission("admin", user_obj.properties.userId)
+    except jots.pyauth.user.UserNotFound:
+      pass
+    except jots.pyauth.user.InputError:
+      pass
+
+    if not user_obj:
+      try:
+        app_obj = jots.pyauth.app.app(app_name=requester_id, db=DB_CON)
+      except jots.pyauth.app.AppNotFound:
+        raise error_handlers.InvalidUsage("invalid requestor id", status=403)
+      except jots.pyauth.user.InputError:
+        raise error_handlers.InvalidUsage("invalid requestor id", status=403)
+
+    return func(*args, **kwargs)
+  return wrapper
 
 
 def _check_group_permission(group_name, user_id):
@@ -55,6 +92,7 @@ def api_index():
 
 @app.route('/api/v1/groups/find', methods=['POST'])
 @jwt_required
+@protected_view
 def api_findgroups():
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:
@@ -71,15 +109,6 @@ def api_findgroups():
     raise error_handlers.InvalidUsage("bad payload", status_code=400)
 
   groupname = html.escape(request_content['groupname'])
-
-
-  username = get_jwt_identity()
-  try:
-    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
-  except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
-
-  _check_group_permission("admin", user.properties.userId)
 
   try:
     response = jots.pyauth.group.find_groups_like(groupname, db=DB_CON)
@@ -160,6 +189,7 @@ def api_deletegroup():
 
 @app.route('/api/v1/groups/<group_id>/members')
 @jwt_required
+@protected_view
 def api_groupmembers(group_id):
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:
@@ -168,26 +198,6 @@ def api_groupmembers(group_id):
     DB_CON = None
 
   group_id = html.escape(group_id)
-
-  # Extract requesters identidy and confirm it's a valid user or app
-  requester_id = get_jwt_identity()
-  try:
-    # Exceptions as 'passed' as they will be picked up by app check
-    user_obj = None
-    user_obj = jots.pyauth.user.user(email_address=requester_id, db=DB_CON)
-    _check_group_permission("admin", user_obj.properties.userId)
-  except jots.pyauth.user.UserNotFound:
-    pass
-  except jots.pyauth.user.InputError:
-    pass
-
-  if not user_obj:
-    try:
-      app_obj = jots.pyauth.app.app(app_name=requester_id, db=DB_CON)
-    except jots.pyauth.app.AppNotFound:
-      raise error_handlers.InvalidUsage("invalid requestor id", status=403)
-    except jots.pyauth.user.InputError:
-      raise error_handlers.InvalidUsage("invalid requestor id", status=403)
 
   try:
     group = jots.pyauth.group.group(group_id=group_id, db=DB_CON)
@@ -203,6 +213,7 @@ def api_groupmembers(group_id):
 
 @app.route('/api/v1/groups/<group_id>/members/add', methods=['POST'])
 @jwt_required
+@protected_view
 def api_groupmember_add(group_id):
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:
@@ -211,14 +222,6 @@ def api_groupmember_add(group_id):
     DB_CON = None
 
   group_id = html.escape(group_id)
-
-  username = get_jwt_identity()
-  try:
-    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
-  except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
-
-  _check_group_permission("admin", user.properties.userId)
 
   # Reject non-JSON payload
   if not request.json:
@@ -250,6 +253,7 @@ def api_groupmember_add(group_id):
 
 @app.route('/api/v1/groups/<group_id>/members/remove', methods=['POST'])
 @jwt_required
+@protected_view
 def api_groupmember_remove(group_id):
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:
@@ -258,14 +262,6 @@ def api_groupmember_remove(group_id):
     DB_CON = None
 
   group_id = html.escape(group_id)
-
-  username = get_jwt_identity()
-  try:
-    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
-  except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
-
-  _check_group_permission("admin", user.properties.userId)
 
   # Reject non-JSON payload
   if not request.json:
@@ -298,6 +294,7 @@ def api_groupmember_remove(group_id):
 
 @app.route('/api/v1/users/find', methods=['POST'])
 @jwt_required
+@protected_view
 def api_findusers():
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:
@@ -315,14 +312,6 @@ def api_findusers():
 
   email_address = html.escape(request_content['email'])
 
-  username = get_jwt_identity()
-  try:
-    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
-  except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
-
-  _check_group_permission("admin", user.properties.userId)
-
   try:
     response = jots.pyauth.user.find_users_like(email_address, db=DB_CON)
     return jsonify(response)
@@ -333,32 +322,13 @@ def api_findusers():
 
 @app.route('/api/v1/users/<user_id>/details')
 @jwt_required
+@protected_view
 def api_user_details(user_id):
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:
     DB_CON = app.config['TEST_DB']
   else:
     DB_CON = None
-
-  # Extract requesters identidy and confirm it's a valid user or app
-  requester_id = get_jwt_identity()
-  try:
-    # Exceptions as 'passed' as they will be picked up by app check
-    user_obj = None
-    user_obj = jots.pyauth.user.user(email_address=requester_id, db=DB_CON)
-    _check_group_permission("admin", user_obj.properties.userId)
-  except jots.pyauth.user.UserNotFound:
-    pass
-  except jots.pyauth.user.InputError:
-    pass
-
-  if not user_obj:
-    try:
-      app_obj = jots.pyauth.app.app(app_name=requester_id, db=DB_CON)
-    except jots.pyauth.app.AppNotFound:
-      raise error_handlers.InvalidUsage("invalid requestor id", status=403)
-    except jots.pyauth.user.InputError:
-      raise error_handlers.InvalidUsage("invalid requestor id", status=403)
 
   user_id = html.escape(user_id)
 
@@ -373,19 +343,13 @@ def api_user_details(user_id):
 
 @app.route('/api/v1/users/<user_id>/set/<user_attribute>', methods=['POST'])
 @jwt_required
+@protected_view
 def api_set_user_attribute(user_id, user_attribute):
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:
     DB_CON = app.config['TEST_DB']
   else:
     DB_CON = None
-
-  req_username = get_jwt_identity()
-  try:
-    req_user = jots.pyauth.user.user(email_address=req_username, db=DB_CON)
-  except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
-  _check_group_permission("admin", req_user.properties.userId)
 
   # Reject non-JSON payload
   if not request.json:
@@ -410,15 +374,28 @@ def api_set_user_attribute(user_id, user_attribute):
   # Otherwise, use attribute change method
   if user_attribute == "status" and attribute_value == "reset":
     try:
-      # TODO - Indegrate with mailer
-      # The next step is to email a link to the 'reset' page with a query string (q) containing reset code
       reset_code = user.reset_password(service_domain=app.config['DOMAIN_NAME'])
-      return jsonify({"new_value": user.properties.as_dict()[user_attribute]})
-
     except jots.pyauth.user.UserActionError as err:
       raise error_handlers.InvalidUsage(err.message, status_code=400)
     except jots.pyauth.user.InputError as err:
       raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+    # The next step is to email a link to the 'reset' page with a query string (q) containing reset code
+    try:
+      email_obj = mailer.personalised_email(recipient=user.properties.email,
+                                            template_name="reset",
+                                            data={"site_name": app.config['DOMAIN_NAME'],
+                                                  "reset_url": "https://{}:5000/reset?q={}".format(app.config['DOMAIN_NAME'], reset_code)})
+      if app.config['TESTING']:
+        email_obj.send(mail_agent="file")
+      else:
+        email_obj.send()
+    except mailer.InputError as err:
+      raise error_handlers.InvalidUsage(err.message, status_code=400)
+    except mailer.MailActionError as err:
+      raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+    return jsonify({"new_value": user.properties.as_dict()[user_attribute]})
 
   else:
     try:
@@ -432,19 +409,13 @@ def api_set_user_attribute(user_id, user_attribute):
 
 @app.route('/api/v1/users/delete', methods=['POST'])
 @jwt_required
+@protected_view
 def api_user_delete():
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:
     DB_CON = app.config['TEST_DB']
   else:
     DB_CON = None
-
-  req_username = get_jwt_identity()
-  try:
-    req_user = jots.pyauth.user.user(email_address=req_username, db=DB_CON)
-  except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
-  _check_group_permission("admin", req_user.properties.userId)
 
   # Reject non-JSON payload
   if not request.json:
@@ -465,6 +436,7 @@ def api_user_delete():
 
 @app.route('/api/v1/apps/find', methods=['POST'])
 @jwt_required
+@protected_view
 def api_findapps():
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:
@@ -482,14 +454,6 @@ def api_findapps():
 
   app_name = html.escape(request_content['appname'])
 
-  username = get_jwt_identity()
-  try:
-    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
-  except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
-
-  _check_group_permission("admin", user.properties.userId)
-
   try:
     response = jots.pyauth.app.find_apps_like(app_name, db=DB_CON)
     return jsonify(response)
@@ -500,20 +464,13 @@ def api_findapps():
 
 @app.route('/api/v1/apps/new', methods=['POST'])
 @jwt_required
+@protected_view
 def api_newapp():
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:
     DB_CON = app.config['TEST_DB']
   else:
     DB_CON = None
-
-  username = get_jwt_identity()
-  try:
-    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
-  except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
-
-  _check_group_permission("admin", user.properties.userId)
 
   # Reject non-JSON payload
   if not request.json:
@@ -533,20 +490,13 @@ def api_newapp():
 
 @app.route('/api/v1/apps/delete', methods=['POST'])
 @jwt_required
+@protected_view
 def api_deleteapp():
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:
     DB_CON = app.config['TEST_DB']
   else:
     DB_CON = None
-
-  username = get_jwt_identity()
-  try:
-    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
-  except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
-
-  _check_group_permission("admin", user.properties.userId)
 
   # Reject non-JSON payload
   if not request.json:
@@ -564,5 +514,3 @@ def api_deleteapp():
     raise error_handlers.InvalidUsage(err.message, status_code=400)
   except jots.pyauth.group.AppActionError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
-
-
