@@ -23,14 +23,14 @@ import jots.pyauth.app
 def protected_view(func):
   ''' Decorator for views only accessible to administrators or apps
   '''
-  # Allow the use of a mock DB during testing
-  if app.config['TESTING']:
-    DB_CON = app.config['TEST_DB']
-  else:
-    DB_CON = None
-
   @wraps(func)
   def wrapper(*args, **kwargs):
+    # Allow the use of a mock DB during testing
+    if app.config['TESTING']:
+      DB_CON = app.config['TEST_DB']
+    else:
+      DB_CON = None
+
     # Extract requesters identidy and confirm it's a valid user or app
     requester_id = get_jwt_identity()
     try:
@@ -57,9 +57,9 @@ def protected_view(func):
       try:
         app_obj = jots.pyauth.app.app(app_name=requester_id, db=DB_CON)
       except jots.pyauth.app.AppNotFound:
-        raise error_handlers.InvalidUsage("invalid requestor id", status=403)
+        raise error_handlers.InvalidUsage("invalid requestor id", status_code=403)
       except jots.pyauth.user.InputError:
-        raise error_handlers.InvalidUsage("invalid requestor id", status=403)
+        raise error_handlers.InvalidUsage("invalid requestor id", status_code=403)
 
     return func(*args, **kwargs)
   return wrapper

@@ -222,6 +222,12 @@ def api_passwordreset():
 
 @app.route('/token/new')
 def token_get():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   if 'Authorization' not in request.headers:
     raise error_handlers.InvalidUsage("missing autorization header", status_code=400)
 
@@ -236,7 +242,7 @@ def token_get():
 
   key, secret = b64_auth_content.split(":")
   try:
-    app_obj = jots.pyauth.app.app(app_key=key)
+    app_obj = jots.pyauth.app.app(app_key=key, db=DB_CON)
   except jots.pyauth.app.AppNotFound:
     raise error_handlers.InvalidUsage("bad app", status_code=400)
   except jots.pyauth.app.InputError as err:

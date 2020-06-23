@@ -31,14 +31,12 @@ def test_get_protected_endpoint(client, example_user, example_user_data, example
   assert example_user.properties.userId in result.json
 
 
-def test_post_protected_endpoint(client, example_user, example_user_data, registered_user, example_group):
+def test_post_protected_endpoint_groups(client, example_user, example_user_data, registered_user, example_group):
   ''' Access a restricted API endpoint using CSRF token signature
       1) Post groupname and confirm found group matches fixtures
       2) Add group member
       3) Remove group member
-      4) Find user and confirm matching content
-      5) Create and delete a new group
-      6) Delete user
+      4) Create and delete a new group
   '''
   with client.application.app_context():
     access_token = create_access_token(example_user.properties.email)
@@ -81,16 +79,6 @@ def test_post_protected_endpoint(client, example_user, example_user_data, regist
   assert registered_user.properties.userId not in result.json
 
   #4
-  post_data = {"email": example_user.properties.email}
-  result = client.post("/api/v1/users/find",
-                       data=json.dumps(post_data),
-                       headers=headers,
-                       follow_redirects=True)
-
-  assert result.status_code == 200
-  assert example_user.properties.email in result.json
-
-  #5
   post_data = {"groupname": "newgroupA"}
   result = client.post("/api/v1/groups/new",
                        data=json.dumps(post_data),
@@ -110,7 +98,32 @@ def test_post_protected_endpoint(client, example_user, example_user_data, regist
   assert result.status_code == 200
   assert "result" in result.json
 
-  #6
+
+def test_post_protected_endpoint_users(client, example_user, example_user_data, registered_user, example_group):
+  ''' Access a restricted API endpoint using CSRF token signature
+      1) Find user
+      2) Delete user
+  '''
+  with client.application.app_context():
+    access_token = create_access_token(example_user.properties.email)
+    csrf_code = get_csrf_token(access_token)
+
+  client.set_cookie(example_user_data['service_domain'], "access_token_cookie", access_token)
+
+  headers = {"Content-Type": "application/json",
+             "X-CSRF-TOKEN": csrf_code}
+
+  #1
+  post_data = {"email": example_user.properties.email}
+  result = client.post("/api/v1/users/find",
+                       data=json.dumps(post_data),
+                       headers=headers,
+                       follow_redirects=True)
+
+  assert result.status_code == 200
+  assert example_user.properties.email in result.json
+
+  #2
   post_data = {"userid": example_user.properties.userId}
   result = client.post("/api/v1/users/delete",
                        data=json.dumps(post_data),
@@ -120,3 +133,41 @@ def test_post_protected_endpoint(client, example_user, example_user_data, regist
   assert result.status_code == 200
   assert "result" in result.json
 
+
+def test_post_protected_endpoint_apps(client, example_user, example_user_data, registered_user, example_group):
+  ''' Access a restricted API endpoint using CSRF token signature
+      1) Create app
+  '''
+  with client.application.app_context():
+    access_token = create_access_token(example_user.properties.email)
+    csrf_code = get_csrf_token(access_token)
+
+  client.set_cookie(example_user_data['service_domain'], "access_token_cookie", access_token)
+
+  headers = {"Content-Type": "application/json",
+             "X-CSRF-TOKEN": csrf_code}
+
+  #1
+  post_data = {"appname": "newappA"}
+  result = client.post("/api/v1/apps/new",
+                       data=json.dumps(post_data),
+                       headers=headers,
+                       follow_redirects=True)
+
+  assert result.status_code == 200
+  assert "newappA" in result.json
+
+  new_app_id = result.json['newappA']['id']
+  new_app_key = result.json['newappA']['key']
+  new_app_secret = result.json['newappA']['secret']
+
+  #2
+  post_data = {"appname": "newappA"}
+  result = client.post("/api/v1/apps/find",
+                       data=json.dumps(post_data),
+                       headers=headers,
+                       follow_redirects=True)
+
+  assert result.status_code == 200
+  assert "newappA" in result.json
+  assert result.json['newappA'] == new_app_id

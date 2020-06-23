@@ -22,14 +22,14 @@ import jots.pyauth.group
 def protected_view(func):
   ''' Decorator for views only accessible to administrators
   '''
-  # Allow the use of a mock DB during testing
-  if app.config['TESTING']:
-    DB_CON = app.config['TEST_DB']
-  else:
-    DB_CON = None
-
   @wraps(func)
   def wrapper(*args, **kwargs):
+    # Allow the use of a mock DB during testing
+    if app.config['TESTING']:
+      DB_CON = app.config['TEST_DB']
+    else:
+      DB_CON = None
+
     username = get_jwt_identity()
     try:
       user = jots.pyauth.user.user(email_address=username, db=DB_CON)

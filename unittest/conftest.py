@@ -4,7 +4,7 @@ import mongomock
 from flask_jwt_extended import (create_refresh_token, create_access_token)
 
 import jots.webapp
-from jots.pyauth import mongo, user, group
+from jots.pyauth import mongo, user, group, app
 
 
 @pytest.fixture(scope="function")
@@ -85,6 +85,15 @@ def example_group(mongo_object, example_group_data, example_user):
 
   yield group_object
   mongo_object.clear_collections()
+
+
+@pytest.fixture(scope="function")
+def example_app(mongo_object):
+  app_id, app_key, app_secret = app.create_app("newappZ", db=mongo_object)
+
+  yield {"newappZ": {"id": app_id, "key": app_key, "secret": app_secret}}
+  mongo_object.clear_collections()
+
 
 
 @pytest.fixture(scope="function")
