@@ -492,3 +492,24 @@ def api_deleteapp():
     raise error_handlers.InvalidUsage(err.message, status_code=400)
   except jots.pyauth.group.AppActionError as err:
     raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+
+@app.route('/api/v1/apps/<app_id>/key')
+@jwt_required
+@protected_view
+def api_get_appkey(app_id):
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
+  app_id = html.escape(app_id)
+  try:
+    app_object = jots.pyauth.app.app(app_id=app_id, db=DB_CON)
+  except jots.pyauth.app.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+  except jots.pyauth.app.AppNotFound as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+
+  return app_object.properties.key

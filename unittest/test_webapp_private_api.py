@@ -137,6 +137,8 @@ def test_post_protected_endpoint_users(client, example_user, example_user_data, 
 def test_post_protected_endpoint_apps(client, example_user, example_user_data, registered_user, example_group):
   ''' Access a restricted API endpoint using CSRF token signature
       1) Create app
+      2) Find app
+      3) Get app key
   '''
   with client.application.app_context():
     access_token = create_access_token(example_user.properties.email)
@@ -171,3 +173,11 @@ def test_post_protected_endpoint_apps(client, example_user, example_user_data, r
   assert result.status_code == 200
   assert "newappA" in result.json
   assert result.json['newappA'] == new_app_id
+
+  #3
+  result = client.get("/api/v1/apps/{}/key".format(new_app_id),
+                       headers=headers,
+                       follow_redirects=True)
+
+  assert result.status_code == 200
+  assert result.data.decode('utf-8') == new_app_key
