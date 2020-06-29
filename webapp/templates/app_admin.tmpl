@@ -227,7 +227,6 @@
 
     $("#appcreate-add-btn").click(function(){
       var app_name = $("#appcreate-name").val();
-      console.log("create - " + app_name);
       var check_result = $.ajax({
               url: "https://{{ api_url }}:5000/api/v1/apps/new",
               type: "POST",
@@ -238,9 +237,6 @@
               success: function (result){
                 for (var key in result) {
                   if (result.hasOwnProperty(key)) {
-                    console.log(result[key]['id']);
-                    console.log(result[key]['key']);
-                    console.log(result[key]['secret']);
                     $("#results-table").append('<tr class="table-light" id="' + result[key]['id'] +'">' + 
                       '<td>' + key + '</td>' + 
                       '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-appkey" data-appid="' + result[key]['id'] + '">Show Key</button>' +

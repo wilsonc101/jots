@@ -4,12 +4,12 @@ from urllib.parse import urlparse
 
 from functools import wraps
 
-from flask import Flask, request, render_template, jsonify, make_response, redirect
+from flask import Flask, request, render_template, jsonify, make_response, redirect, url_for
 from flask_jwt_extended import (
     JWTManager, jwt_required, jwt_optional, jwt_refresh_token_required,
     create_refresh_token, create_access_token,
     set_access_cookies, set_refresh_cookies, unset_jwt_cookies,
-    get_jwt_identity, verify_jwt_in_request
+    get_jwt_identity, verify_jwt_in_request, get_raw_jwt
 )
 
 from jots.webapp import app
@@ -53,8 +53,27 @@ def protected_view(func):
 @app.route('/token/refresh')
 @jwt_refresh_token_required
 def refresh_get():
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
   # Create the new access token
   current_user = get_jwt_identity()
+  current_refresh_jti = get_raw_jwt()['jti']
+
+  try:
+    user = jots.pyauth.user.user(email_address=current_user, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("access denied", status_code=403)
+  except jots.pyauth.user.InputError:
+    raise error_handlers.InvalidUsage("access denied", status_code=403)
+
+  # Check that refresh token given matches what is stored
+  if current_refresh_jti != user.properties.refreshJti:
+    return redirect(url_for('logout', request_path=request.path))
+
   access_token = create_access_token(identity=current_user)
 
   if "request_path" in request.args:
@@ -113,7 +132,13 @@ def page():
     DB_CON = None
 
   username = get_jwt_identity()
-  user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+  try:
+    user = jots.pyauth.user.user(email_address=username, db=DB_CON)
+  except jots.pyauth.user.UserNotFound:
+    raise error_handlers.InvalidUsage("access denied", status_code=403)
+  except jots.pyauth.user.InputError:
+    raise error_handlers.InvalidUsage("access denied", status_code=403)
+
   groups = jots.pyauth.group.find_user_in_group(user.properties.userId, db=DB_CON)
 
   group_links = list()

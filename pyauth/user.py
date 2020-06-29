@@ -140,7 +140,17 @@ class user(object):
                 resetCode=reset_code,
                 resetExpiry=date_reset_expiry_str)
 
+    # If user has logged in, clear refresh token JTI to block refreshing access token
+    if "refreshJti" in self.properties.as_dict():
+      self.update(refreshJti="")
+
     return reset_code
+
+
+  def set_refresh_jti(self, jti):
+    _check_user_string(jti)
+    self.update(refreshJti=jti)
+    return True
 
 
   def update_named_attribute(self, attribute, value):

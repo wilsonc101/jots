@@ -8,7 +8,7 @@ from flask_jwt_extended import (
     JWTManager, jwt_required, jwt_optional, jwt_refresh_token_required,
     create_refresh_token, create_access_token,
     set_access_cookies, set_refresh_cookies, unset_jwt_cookies,
-    get_jwt_identity, verify_jwt_in_request
+    get_jwt_identity, verify_jwt_in_request, get_jti
 )
 
 import jots.pyauth.user
@@ -63,6 +63,14 @@ def login_form():
                                      user_claims={"groups": group_names})
 
   refresh_token = create_refresh_token(identity=username)
+  refresh_jti = get_jti(refresh_token)
+
+  try:
+    user.set_refresh_jti(refresh_jti)
+  except jots.pyauth.user.InputError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
+  except jots.pyauth.user.UserActionError as err:
+    raise error_handlers.InvalidUsage(err.message, status_code=400)
 
   response = make_response(redirect("/page"))
   set_access_cookies(response, access_token)

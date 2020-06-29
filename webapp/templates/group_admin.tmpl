@@ -308,7 +308,6 @@
 
     $("#groupcreate-add-btn").click(function(){
       var group_name = $("#groupcreate-name").val();
-      console.log("create - " + group_name);
       var check_result = $.ajax({
               url: "https://{{ api_url }}:5000/api/v1/groups/new",
               type: "POST",
@@ -378,11 +377,6 @@
                 console.log(result);
               }
       });
-
-
-
-
-      console.log("delete - " + group_id);
     }
 
 
