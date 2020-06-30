@@ -1,0 +1,15 @@
+version: '3'
+services:
+  database:
+    image: 'mongo'
+    container_name: 'jots_pyauth_mongo'
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=pyauthadmin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+      - MONGO_INITDB_DATABASE=pyauth
+    ports:
+      - '27017:27017'
+    volumes:
+      - ./init-db.js:/docker-entrypoint-initdb.d/init-db.js:ro
+
+    

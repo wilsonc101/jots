@@ -1,7 +1,7 @@
 import pymongo
 import uuid
 
-client = pymongo.MongoClient()
+client = pymongo.MongoClient(username="pyauthadmin", password="password")
 db = client.pyauth
 
 col_u = db.users

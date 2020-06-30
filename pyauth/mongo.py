@@ -6,6 +6,8 @@ import re
 from bson.objectid import ObjectId
 
 MONGO_HOST = os.environ.get("MONGOHOST")
+MONGO_USER = os.environ.get("MONGOUSER")
+MONGO_PASSWORD = os.environ.get("MONGOPASSWORD")
 MONGO_PORT = 27017
 
 class Error(Exception):
@@ -38,7 +40,8 @@ class DuplicateApp(Error):
 
 
 class mongo(object):
-  def __init__(self, mongo_host=None, mongo_port=None):
+  def __init__(self, mongo_host=None, mongo_port=None,
+                     username=None, password=None):
     if mongo_host is not None:
       self.host = mongo_host
     elif mongo_host is None and MONGO_HOST:
@@ -55,31 +58,20 @@ class mongo(object):
     else:
       raise ConnectionError("new connection", "port required")
 
-    self.client = pymongo.MongoClient(self.host, self.port)
-    try:
-      self.db = self.client.pyauth
-      self.users_collection = self.db.users
-      self.groups_collection = self.db.groups
-      self.apps_collection = self.db.apps
 
-      self.users_collection.create_index("email", unique=True)
-      self.groups_collection.create_index("groupName", unique=True)
-      self.apps_collection.create_index("appName", unique=True)
+    if username is not None:
+      self.client = pymongo.MongoClient(self.host, self.port, username=username, password=password)
+    else:
+      self.client = pymongo.MongoClient(self.host, self.port, username=MONGO_USER, password=MONGO_PASSWORD)
+
+    try:
+      self.client.server_info()
     except pymongo.errors.ConnectionFailure:
       raise ConnectionError("new connection", "could not connect to host")
 
-  def clear_collections(self):
-    self.users_collection.drop()
-    self.groups_collection.drop()
-    self.apps_collection.drop()
-
-    self.users_collection = self.db.users
-    self.groups_collection = self.db.groups
-    self.apps_collection = self.db.apps
-
-    self.users_collection.create_index("email", unique=True)
-    self.groups_collection.create_index("groupName", unique=True)
-    self.apps_collection.create_index("appName", unique=True)
+    self.users_collection = self.client.pyauth.users
+    self.groups_collection = self.client.pyauth.groups
+    self.apps_collection = self.client.pyauth.apps
 
 
   def create_user(self, data):

@@ -1,8 +1,12 @@
 JWTSECRET=password
 JWTISSUER=dev.localhost
 MONGOHOST=192.168.1.77
+MONGOUSER=pyauthadmin
+MONGOPASSWORD=password
 
 export JWTSECRET
 export JWTISSUER
 export MONGOHOST
+export MONGOUSER
+export MONGOPASSWORD
 
