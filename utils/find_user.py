@@ -1,7 +1,7 @@
 import pymongo
 import json
 
-client = pymongo.MongoClient()
+client = pymongo.MongoClient(username="pyauthadmin", password="password")
 db = client.pyauth
 collection = db.users
 

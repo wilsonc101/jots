@@ -2,7 +2,7 @@ version: '3'
 services:
   database:
     image: 'mongo'
-    container_name: 'jots_pyauth_mongo'
+    container_name: 'jots_database'
     environment:
       - MONGO_INITDB_ROOT_USERNAME=pyauthadmin
       - MONGO_INITDB_ROOT_PASSWORD=password
