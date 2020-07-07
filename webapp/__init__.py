@@ -6,8 +6,10 @@ from flask_jwt_extended import JWTManager
 SECRET = os.environ.get("JWTSECRET")
 ISSUER = os.environ.get("JWTISSUER")
 BASE_URL = ISSUER # This shoud be a seperate envvar
+SERVER_PORT = 5000 # Default server port
 
 app = Flask(__name__)
+app.config['SERVER_PORT'] = SERVER_PORT
 app.config['DOMAIN_NAME'] = BASE_URL
 app.config['JWT_SECRET_KEY'] = SECRET
 app.config['JWT_COOKIE_DOMAIN'] = ISSUER

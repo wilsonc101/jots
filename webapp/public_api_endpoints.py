@@ -163,7 +163,9 @@ def api_newuser():
     email_obj = mailer.personalised_email(recipient=email,
                                           template_name="newuser",
                                           data={"site_name": app.config['DOMAIN_NAME'],
-                                                "reset_url": "https://{}:5000/reset?q={}".format(app.config['DOMAIN_NAME'], reset_code)})
+                                                "reset_url": "https://{}:{}/reset?q={}".format(app.config['DOMAIN_NAME'],
+                                                                                               app.config['SERVER_PORT'],
+                                                                                               reset_code)})
     if app.config['TESTING']:
       email_obj.send(mail_agent="file")
     else:
@@ -214,7 +216,9 @@ def api_passwordreset():
     email_obj = mailer.personalised_email(recipient=email,
                                           template_name="reset",
                                           data={"site_name": app.config['DOMAIN_NAME'],
-                                                "reset_url": "https://{}:5000/reset?q={}".format(app.config['DOMAIN_NAME'], reset_code)})
+                                                "reset_url": "https://{}:{}/reset?q={}".format(app.config['DOMAIN_NAME'],
+                                                                                               app.config['SERVER_PORT'],
+                                                                                               reset_code)})
     if app.config['TESTING']:
       email_obj.send(mail_agent="file")
     else:

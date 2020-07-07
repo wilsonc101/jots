@@ -5,7 +5,7 @@
 </head>
 
 <body>
-  <a href="https://{{ api_url }}:5000/logout">Logout</a>
+  <a href="https://{{ api_url }}:{{ server_port }}/logout">Logout</a>
   <div class="container">
     <div class="pt-2 tab-pane" id="resultstab">
       <div class="row">
@@ -109,7 +109,7 @@
       var email_address = $("#search-email").val();
       $("#results-table").empty()
       var check_result = $.ajax({
-              url: "https://{{ api_url }}:5000/api/v1/users/find",
+              url: "https://{{ api_url }}:{{ server_port }}/api/v1/users/find",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",
@@ -150,7 +150,7 @@
       $('#useredit-email').val(user_email);
 
       var check_result = $.ajax({
-              url: "https://{{ api_url }}:5000/api/v1/users/" + user_id  + "/details",
+              url: "https://{{ api_url }}:{{ server_port }}/api/v1/users/" + user_id  + "/details",
               type: "GET",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               success: function (result){
@@ -187,7 +187,7 @@
       var action = $(button).data("action");
 
       var check_result = $.ajax({
-              url: "https://{{ api_url }}:5000/api/v1/users/" + user_id + "/set/status",
+              url: "https://{{ api_url }}:{{ server_port }}/api/v1/users/" + user_id + "/set/status",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",
@@ -216,7 +216,7 @@
       var user_id = $(button).data("userid");
 
       var check_result = $.ajax({
-              url: "https://{{ api_url }}:5000/api/v1/users/delete",
+              url: "https://{{ api_url }}:{{ server_port }}/api/v1/users/delete",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",

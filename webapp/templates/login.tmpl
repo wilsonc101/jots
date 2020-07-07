@@ -138,7 +138,7 @@
     var email = $("#newuserEmail").val();
 
     var check_result = $.ajax({
-            url: "https://{{ api_url }}:5000/api/v1/users/new",
+            url: "https://{{ api_url }}:{{ server_port }}/api/v1/users/new",
             type: "POST",
             contentType:"application/json; charset=utf-8",
             dataType:"json",
@@ -172,7 +172,7 @@
   $("#resetsend-btn").click(function(){
     var email= $("#inputEmail").val();
     var check_result = $.ajax({
-            url: "https://{{ api_url }}:5000/api/v1/users/reset",
+            url: "https://{{ api_url }}:{{ server_port }}/api/v1/users/reset",
             type: "POST",
             contentType:"application/json; charset=utf-8",
             dataType:"json",

@@ -73,6 +73,12 @@ class mongo(object):
     self.groups_collection = self.client.pyauth.groups
     self.apps_collection = self.client.pyauth.apps
 
+  def clear_collections(self):
+    # Required to allow unit testing to clear up after runs
+    self.users_collection.delete_many({})
+    self.groups_collection.delete_many({})
+    self.apps_collection.delete_many({})
+
 
   def create_user(self, data):
     try:

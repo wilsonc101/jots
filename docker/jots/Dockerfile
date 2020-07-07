@@ -5,5 +5,5 @@ RUN ["mv", "jots/runserv.py", "."]
 RUN ["mv", "jots/requirements.txt", "."]
 RUN ["pip", "install", "-r", "requirements.txt"]
 
-ENTRYPOINT ["python", "runserv.py"]
+ENTRYPOINT ["python", "runserv.py", "-p", "5000"]
 EXPOSE 5000/tcp

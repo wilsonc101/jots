@@ -101,21 +101,27 @@ def refresh_get():
 @jwt_required
 @protected_view
 def page_admin_group():
-  return render_template("group_admin.tmpl", api_url=app.config['DOMAIN_NAME'])
+  return render_template("group_admin.tmpl",
+                         api_url=app.config['DOMAIN_NAME'],
+                         server_port=app.config['SERVER_PORT'])
 
 
 @app.route('/admin/users')
 @jwt_required
 @protected_view
 def page_admin_user():
-  return render_template("user_admin.tmpl", api_url=app.config['DOMAIN_NAME'])
+  return render_template("user_admin.tmpl",
+                         api_url=app.config['DOMAIN_NAME'],
+                         server_port=app.config['SERVER_PORT'])
 
 
 @app.route('/admin/apps')
 @jwt_required
 @protected_view
 def page_admin_app():
-  return render_template("app_admin.tmpl", api_url=app.config['DOMAIN_NAME'])
+  return render_template("app_admin.tmpl",
+                         api_url=app.config['DOMAIN_NAME'],
+                         server_port=app.config['SERVER_PORT'])
 
 
 @app.route('/page')
@@ -151,7 +157,10 @@ def page():
     if "url" in group_obj.properties.as_dict():
       group_links.append({"name": group, "url": group_obj.properties.url})
 
-  return render_template("page.tmpl", api_url=app.config['DOMAIN_NAME'], groups=group_links)
+  return render_template("page.tmpl",
+                         api_url=app.config['DOMAIN_NAME'],
+                         server_port=app.config['SERVER_PORT'],
+                         groups=group_links)
 
 
 @app.route('/demo')

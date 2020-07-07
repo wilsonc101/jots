@@ -1,3 +1,4 @@
+import argparse
 import os
 
 from flask import Flask, request, render_template, jsonify, make_response, redirect
@@ -12,8 +13,10 @@ from flask_jwt_extended import (
 SECRET = os.environ.get("JWTSECRET")
 ISSUER = os.environ.get("JWTISSUER")
 BASE_URL = ISSUER # This shoud be a seperate envvar
+SERVER_PORT = 5000 # Default port
 
 app = Flask(__name__)
+app.config['SERVER_PORT'] = SERVER_PORT
 app.config['DOMAIN_NAME'] = BASE_URL
 app.config['JWT_SECRET_KEY'] = SECRET
 app.config['JWT_COOKIE_DOMAIN'] = ISSUER
@@ -69,7 +72,7 @@ def missing_token_callback(token):
 @app.route('/')
 @jwt_required
 def index():
-  return str(get_jwt_identity())
+  return str("user: {}<br><br>server port:{}".format(get_jwt_identity(), app.config['SERVER_PORT']))
 
 
 
@@ -77,8 +80,16 @@ def index():
 
 
 if __name__ == "__main__":
+  parser = argparse.ArgumentParser()
+  parser.add_argument("-p", "--port", type=int, help="port to bind with flask")
+  args = parser.parse_args()
+
+  if args.port < 1023:
+    raise ValueError("port", "port must be in unprivileged range")
+
+  app.config['SERVER_PORT'] = args.port
   app.run(host='0.0.0.0',
-          port="5500",
+          port=args.port,
           debug=True,
           ssl_context='adhoc')
 
