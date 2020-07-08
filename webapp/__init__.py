@@ -2,6 +2,7 @@ import os
 
 from flask import Flask
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 
 SECRET = os.environ.get("JWTSECRET")
 ISSUER = os.environ.get("JWTISSUER")
@@ -21,9 +22,20 @@ app.config['JWT_COOKIE_CSRF_PROTECT'] = True
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 30
 
 jwt = JWTManager(app)
+CORS(app)
+
 
 from jots.webapp import error_handlers
 from jots.webapp import public_api_endpoints
-from jots.webapp import private_api_endpoints
 from jots.webapp import public_web_views
 from jots.webapp import private_web_views
+
+from jots.webapp import bp_private_api_common
+from jots.webapp import bp_private_api_users
+from jots.webapp import bp_private_api_groups
+from jots.webapp import bp_private_api_apps
+
+app.register_blueprint(bp_private_api_common.api_common, url_prefix="/api")
+app.register_blueprint(bp_private_api_users.api_users, url_prefix="/api/v1/users")
+app.register_blueprint(bp_private_api_groups.api_groups, url_prefix="/api/v1/groups")
+app.register_blueprint(bp_private_api_apps.api_apps, url_prefix="/api/v1/apps")

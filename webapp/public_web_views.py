@@ -17,7 +17,9 @@ from jots.webapp import error_handlers
 @jwt_optional
 def index():
   if get_jwt_identity() is None:
-    return render_template("login.tmpl", api_url=app.config['DOMAIN_NAME'])
+    return render_template("login.tmpl",
+                           api_url=app.config['DOMAIN_NAME'],
+                           server_port=app.config['SERVER_PORT'])
 
   else:
     return make_response(redirect("/page"))

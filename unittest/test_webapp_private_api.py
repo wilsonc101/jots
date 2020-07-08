@@ -19,7 +19,8 @@ def test_get_protected_endpoint(client, example_user, example_user_data, example
   client.set_cookie(example_user_data['service_domain'], "access_token_cookie", access_token)
 
   #1
-  result = client.get("/api")
+  result = client.get("/api",
+                      follow_redirects=True)
 
   assert result.status_code == 200
   assert result.json['version'] == 'v1'
