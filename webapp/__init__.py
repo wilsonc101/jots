@@ -26,15 +26,28 @@ CORS(app)
 
 
 from jots.webapp import error_handlers
-from jots.webapp import public_api_endpoints
-from jots.webapp import public_web_views
-from jots.webapp import private_web_views
 
+# Public Webviews
+from jots.webapp import bp_public_webview_common
+app.register_blueprint(bp_public_webview_common.web_root, url_prefix="/")
+
+# Public API
+from jots.webapp import bp_public_api_endpoints
+app.register_blueprint(bp_public_api_endpoints.api_root, url_prefix="/")
+
+# Private Webviews
+from jots.webapp import bp_private_webview_common
+from jots.webapp import bp_private_webview_example
+from jots.webapp import bp_private_webview_admin
+app.register_blueprint(bp_private_webview_common.web_private_common, url_prefix="/")
+app.register_blueprint(bp_private_webview_example.web_private_example, url_prefix="/")
+app.register_blueprint(bp_private_webview_admin.web_private_admin, url_prefix="/admin")
+
+# Private API
 from jots.webapp import bp_private_api_common
 from jots.webapp import bp_private_api_users
 from jots.webapp import bp_private_api_groups
 from jots.webapp import bp_private_api_apps
-
 app.register_blueprint(bp_private_api_common.api_common, url_prefix="/api")
 app.register_blueprint(bp_private_api_users.api_users, url_prefix="/api/v1/users")
 app.register_blueprint(bp_private_api_groups.api_groups, url_prefix="/api/v1/groups")

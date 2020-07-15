@@ -3,7 +3,7 @@ import sys
 import datetime
 import base64
 
-from flask import Flask, request, render_template, jsonify, make_response, redirect
+from flask import Flask, request, render_template, jsonify, make_response, redirect, Blueprint
 from flask_jwt_extended import (
     JWTManager, jwt_required, jwt_optional, jwt_refresh_token_required,
     create_refresh_token, create_access_token,
@@ -17,9 +17,10 @@ from jots.webapp import app, jwt
 from jots.webapp import error_handlers
 from jots.mailer import send as mailer
 
+api_root = Blueprint('root_api', __name__)
 
 # FORM DATA
-@app.route('/login', methods=["POST"])
+@api_root.route('/login', methods=["POST"])
 def login_form():
   ''' Accepts login form data
       Get user object and check password
@@ -79,7 +80,7 @@ def login_form():
   return response
 
 
-@app.route('/reset', methods=["POST"])
+@api_root.route('/reset', methods=["POST"])
 def reset_form():
   ''' Accepts password reset form data
       Validates reset code and sets password
@@ -131,7 +132,7 @@ def reset_form():
 
 
 # JSON
-@app.route('/token/new')
+@api_root.route('/token/new')
 def token_get():
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:

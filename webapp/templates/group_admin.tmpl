@@ -5,7 +5,7 @@
 </head>
 
 <body>
-  <a href="https://{{ api_url }}:{{ server_port }}/logout">Logout</a>
+  <a href="https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/logout">Logout</a>
   <div class="container">
     <div class="pt-2 tab-pane" id="resultstab">
       <div class="row">
@@ -152,7 +152,7 @@
       var group_name = $("#search-groupname").val();
       $("#results-table").empty()
       var check_result = $.ajax({
-              url: "https://{{ api_url }}:{{ server_port }}/api/v1/groups/find",
+              url: "https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/groups/find",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",
@@ -192,7 +192,7 @@
       $('#groupedit-add-groupid').val(group_id);
 
       var check_result = $.ajax({
-              url: "https://{{ api_url }}:{{ server_port }}/api/v1/groups/" + group_id  + "/members",
+              url: "https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/groups/" + group_id  + "/members",
               type: "GET",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               success: function (result){
@@ -231,7 +231,7 @@
       var group_id = $(button).data("groupid");
 
       var check_result = $.ajax({
-              url: "https://{{ api_url }}:{{ server_port }}/api/v1/groups/" + group_id + "/members/remove",
+              url: "https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/groups/" + group_id + "/members/remove",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",
@@ -267,7 +267,7 @@
       var group_id = $('#groupedit-add-groupid').val();
 
       var check_result = $.ajax({
-              url: "https://{{ api_url }}:{{ server_port }}/api/v1/groups/" + group_id + "/members/add",
+              url: "https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/groups/" + group_id + "/members/add",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",
@@ -309,7 +309,7 @@
     $("#groupcreate-add-btn").click(function(){
       var group_name = $("#groupcreate-name").val();
       var check_result = $.ajax({
-              url: "https://{{ api_url }}:{{ server_port }}/api/v1/groups/new",
+              url: "https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/groups/new",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",
@@ -356,7 +356,7 @@
       var group_id = $(button).data("groupid");
 
       var check_result = $.ajax({
-              url: "https://{{ api_url }}:{{ server_port }}/api/v1/groups/delete",
+              url: "https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/groups/delete",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",

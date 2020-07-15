@@ -32,7 +32,7 @@ def expired_token_callback(token):
   token_type = token['type']
   if token_type == "access":
     print("access token has expired - goto refresh")
-    return redirect(url_for('refresh_get', request_path=request.path))
+    return redirect(url_for('private_webview_common.refresh_get', request_path=request.path))
 
   elif token_type == "refresh":
     print("refresh token has expired - goto root/login")
