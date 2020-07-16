@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jots-deployment
+  labels:
+    app: jots
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jots
+  template:
+    metadata:
+      labels:
+        app: jots
+    spec:
+      containers:
+      - name: jots
+        image: jots:0.1
+        ports:
+        - containerPort: 5000

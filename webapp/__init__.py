@@ -32,8 +32,8 @@ from jots.webapp import bp_public_webview_common
 app.register_blueprint(bp_public_webview_common.web_root, url_prefix="/")
 
 # Public API
-from jots.webapp import bp_public_api_endpoints
-app.register_blueprint(bp_public_api_endpoints.api_root, url_prefix="/")
+from jots.webapp import bp_public_api_common
+app.register_blueprint(bp_public_api_common.api_root, url_prefix="/")
 
 # Private Webviews
 from jots.webapp import bp_private_webview_common
