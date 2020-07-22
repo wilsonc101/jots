@@ -50,19 +50,19 @@ def protected_view(func):
       try:
         group = jots.pyauth.group.group(group_name="admin", db=DB_CON)
       except jots.pyauth.group.GroupNotFound:
-        raise error_handlers.InvalidUsage("group not found", status_code=400)
+        raise error_handlers.InvalidAPIUsage("group not found", status_code=400)
 
       if user_obj.properties.userId not in group.properties.members:
-        raise error_handlers.InvalidUsage("access denied", status_code=403)
+        raise error_handlers.InvalidAPIUsage("access denied", status_code=403)
 
     else:
       # No user object found, check if it's an app that's authing
       try:
         app_obj = jots.pyauth.app.app(app_name=requester_id, db=DB_CON)
       except jots.pyauth.app.AppNotFound:
-        raise error_handlers.InvalidUsage("invalid requestor id", status_code=403)
+        raise error_handlers.InvalidAPIUsage("invalid requestor id", status_code=403)
       except jots.pyauth.user.InputError:
-        raise error_handlers.InvalidUsage("invalid requestor id", status_code=403)
+        raise error_handlers.InvalidAPIUsage("invalid requestor id", status_code=403)
 
     return func(*args, **kwargs)
   return wrapper
@@ -78,11 +78,11 @@ def api_newuser():
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if 'email' not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   email = html.escape(request_content['email'])
 
@@ -93,7 +93,7 @@ def api_newuser():
                                               db=DB_CON)
 
   except jots.pyauth.user.UserActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
   # The next step is to email a link to the 'reset' page with a query string (q) containing reset code
   try:
@@ -108,9 +108,9 @@ def api_newuser():
     else:
       email_obj.send()
   except mailer.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
   except mailer.MailActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
   return jsonify({"status": "ok",
                   "reset_code": reset_code})
@@ -126,27 +126,27 @@ def api_passwordreset():
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if 'email' not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   email = html.escape(request_content['email'])
 
   try:
     user = jots.pyauth.user.user(email_address=email, db=DB_CON)
   except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("bad user", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad user", status_code=400)
   except jots.pyauth.user.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
   try:
     reset_code = user.reset_password(service_domain=app.config['DOMAIN_NAME'])
   except jots.pyauth.user.UserActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
   except jots.pyauth.user.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
   # The next step is to email a link to the 'reset' page with a query string (q) containing reset code
   try:
@@ -161,9 +161,9 @@ def api_passwordreset():
     else:
       email_obj.send()
   except mailer.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
   except mailer.MailActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
   return jsonify({"status": "ok",
                   "reset_code": reset_code})
@@ -181,11 +181,11 @@ def api_findusers():
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if 'email' not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   email_address = html.escape(request_content['email'])
 
@@ -213,9 +213,9 @@ def api_user_details(user_id):
     user = jots.pyauth.user.user(user_id=user_id, db=DB_CON)
     return jsonify(user.properties.as_dict())
   except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
+    raise error_handlers.InvalidAPIUsage("invalid user", status=403)
   except jots.pyauth.user.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
 
 @api_users.route('/<user_id>/set/<user_attribute>', methods=['POST'])
@@ -230,11 +230,11 @@ def api_set_user_attribute(user_id, user_attribute):
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if "value" not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   user_id = html.escape(user_id)
   user_attribute = html.escape(user_attribute)
@@ -243,9 +243,9 @@ def api_set_user_attribute(user_id, user_attribute):
   try:
     user = jots.pyauth.user.user(user_id=user_id, db=DB_CON)
   except jots.pyauth.user.UserNotFound:
-    raise error_handlers.InvalidUsage("invalid user", status=403)
+    raise error_handlers.InvalidAPIUsage("invalid user", status=403)
   except jots.pyauth.user.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
   # Changing to reset status should trigger a password reset
   # Otherwise, use attribute change method
@@ -253,9 +253,9 @@ def api_set_user_attribute(user_id, user_attribute):
     try:
       reset_code = user.reset_password(service_domain=app.config['DOMAIN_NAME'])
     except jots.pyauth.user.UserActionError as err:
-      raise error_handlers.InvalidUsage(err.message, status_code=400)
+      raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
     except jots.pyauth.user.InputError as err:
-      raise error_handlers.InvalidUsage(err.message, status_code=400)
+      raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
     # The next step is to email a link to the 'reset' page with a query string (q) containing reset code
     try:
@@ -268,9 +268,9 @@ def api_set_user_attribute(user_id, user_attribute):
       else:
         email_obj.send()
     except mailer.InputError as err:
-      raise error_handlers.InvalidUsage(err.message, status_code=400)
+      raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
     except mailer.MailActionError as err:
-      raise error_handlers.InvalidUsage(err.message, status_code=400)
+      raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
     return jsonify({"new_value": user.properties.as_dict()[user_attribute]})
 
@@ -279,9 +279,9 @@ def api_set_user_attribute(user_id, user_attribute):
       user.update_named_attribute(user_attribute, attribute_value)
       return jsonify({"new_value": user.properties.as_dict()[user_attribute]})
     except jots.pyauth.user.InputError as err:
-      raise error_handlers.InvalidUsage(err.message, status_code=400)
+      raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
     except jots.pyauth.user.UserActionError as err:
-      raise error_handlers.InvalidUsage(err.message, status_code=400)
+      raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
 
 @api_users.route('/delete', methods=['POST'])
@@ -296,11 +296,11 @@ def api_user_delete():
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if "userid" not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   user_id = html.escape(request_content['userid'])
 
@@ -308,5 +308,5 @@ def api_user_delete():
     result = jots.pyauth.user.delete_user(user_id, db=DB_CON)
     return jsonify({"result": str(result)})
   except jots.pyauth.user.UserActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 

@@ -50,19 +50,19 @@ def protected_view(func):
       try:
         group = jots.pyauth.group.group(group_name="admin", db=DB_CON)
       except jots.pyauth.group.GroupNotFound:
-        raise error_handlers.InvalidUsage("group not found", status_code=400)
+        raise error_handlers.InvalidAPIUsage("group not found", status_code=400)
 
       if user_obj.properties.userId not in group.properties.members:
-        raise error_handlers.InvalidUsage("access denied", status_code=403)
+        raise error_handlers.InvalidAPIUsage("access denied", status_code=403)
 
     else:
       # No user object found, check if it's an app that's authing
       try:
         app_obj = jots.pyauth.app.app(app_name=requester_id, db=DB_CON)
       except jots.pyauth.app.AppNotFound:
-        raise error_handlers.InvalidUsage("invalid requestor id", status_code=403)
+        raise error_handlers.InvalidAPIUsage("invalid requestor id", status_code=403)
       except jots.pyauth.user.InputError:
-        raise error_handlers.InvalidUsage("invalid requestor id", status_code=403)
+        raise error_handlers.InvalidAPIUsage("invalid requestor id", status_code=403)
 
     return func(*args, **kwargs)
   return wrapper
@@ -80,11 +80,11 @@ def api_findapps():
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if 'appname' not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   app_name = html.escape(request_content['appname'])
 
@@ -108,18 +108,18 @@ def api_newapp():
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if 'appname' not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   app_name = html.escape(request_content['appname'])
   try:
     app_id, app_key, app_secret = jots.pyauth.app.create_app(app_name, db=DB_CON)
     return jsonify({app_name: {"id": app_id, "key": app_key, "secret": app_secret}})
   except jots.pyauth.app.AppActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
 
 @api_apps.route('/delete', methods=['POST'])
@@ -134,20 +134,20 @@ def api_deleteapp():
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if 'appid' not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   app_id = html.escape(request_content['appid'])
   try:
     result = jots.pyauth.app.delete_app(app_id, db=DB_CON)
     return jsonify({"result": str(result)})
   except jots.pyauth.group.AppNotFound as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
   except jots.pyauth.group.AppActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
 
 @api_apps.route('/<app_id>/key')
@@ -164,8 +164,8 @@ def api_get_appkey(app_id):
   try:
     app_object = jots.pyauth.app.app(app_id=app_id, db=DB_CON)
   except jots.pyauth.app.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
   except jots.pyauth.app.AppNotFound as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
   return app_object.properties.key

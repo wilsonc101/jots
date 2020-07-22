@@ -51,19 +51,19 @@ def protected_view(func):
       try:
         group = jots.pyauth.group.group(group_name="admin", db=DB_CON)
       except jots.pyauth.group.GroupNotFound:
-        raise error_handlers.InvalidUsage("group not found", status_code=400)
+        raise error_handlers.InvalidAPIUsage("group not found", status_code=400)
 
       if user_obj.properties.userId not in group.properties.members:
-        raise error_handlers.InvalidUsage("access denied", status_code=403)
+        raise error_handlers.InvalidAPIUsage("access denied", status_code=403)
 
     else:
       # No user object found, check if it's an app that's authing
       try:
         app_obj = jots.pyauth.app.app(app_name=requester_id, db=DB_CON)
       except jots.pyauth.app.AppNotFound:
-        raise error_handlers.InvalidUsage("invalid requestor id", status_code=403)
+        raise error_handlers.InvalidAPIUsage("invalid requestor id", status_code=403)
       except jots.pyauth.user.InputError:
-        raise error_handlers.InvalidUsage("invalid requestor id", status_code=403)
+        raise error_handlers.InvalidAPIUsage("invalid requestor id", status_code=403)
 
     return func(*args, **kwargs)
   return wrapper
@@ -81,11 +81,11 @@ def api_findgroups():
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if 'groupname' not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   groupname = html.escape(request_content['groupname'])
 
@@ -109,18 +109,18 @@ def api_newgroup():
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if 'groupname' not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   group_name = html.escape(request_content['groupname'])
   try:
     new_group = jots.pyauth.group.create_group(group_name, db=DB_CON)
     return jsonify(new_group)
   except jots.pyauth.group.GroupActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
 
 @api_groups.route('/delete', methods=['POST'])
@@ -135,20 +135,20 @@ def api_deletegroup():
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if 'groupid' not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   group_id = html.escape(request_content['groupid'])
   try:
     result = jots.pyauth.group.delete_group(group_id, db=DB_CON)
     return jsonify({"result": str(result)})
   except jots.pyauth.group.GroupNotFound as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
   except jots.pyauth.group.GroupActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
 
 
@@ -171,9 +171,9 @@ def api_groupmembers(group_id):
   except jots.pyauth.group.GroupNotFound:
     return jsonify(dict())
   except jots.pyauth.group.GroupActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
   except jots.pyauth.group.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
 
 @api_groups.route('/<group_id>/members/add', methods=['POST'])
@@ -190,30 +190,30 @@ def api_groupmember_add(group_id):
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if 'email' not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   email = html.escape(request_content['email'])
   try:
     group = jots.pyauth.group.group(group_id=group_id, db=DB_CON)
     new_member_list = group.add_member(email=email)
   except jots.pyauth.group.GroupNotFound:
-    raise error_handlers.InvalidUsage("group not found", status_code=400)
+    raise error_handlers.InvalidAPIUsage("group not found", status_code=400)
   except jots.pyauth.group.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
   except jots.pyauth.group.GroupActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
   try:
     new_member_list = group.get_members_detail(attribute="email")
     return jsonify(new_member_list)
   except jots.pyauth.group.GroupActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
   except jots.pyauth.group.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
 
 @api_groups.route('/<group_id>/members/remove', methods=['POST'])
@@ -230,11 +230,11 @@ def api_groupmember_remove(group_id):
 
   # Reject non-JSON payload
   if not request.json:
-    raise error_handlers.InvalidUsage("bad payload format", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
   if 'userid' not in request_content:
-    raise error_handlers.InvalidUsage("bad payload", status_code=400)
+    raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   user_id = html.escape(request_content['userid'])
 
@@ -242,16 +242,16 @@ def api_groupmember_remove(group_id):
     group = jots.pyauth.group.group(group_id=group_id, db=DB_CON)
     new_member_list = group.remove_member(user_id=user_id, force=True)
   except jots.pyauth.group.GroupNotFound:
-    raise error_handlers.InvalidUsage("group not found", status_code=400)
+    raise error_handlers.InvalidAPIUsage("group not found", status_code=400)
   except jots.pyauth.group.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
   except jots.pyauth.group.GroupActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
   try:
     new_member_list = group.get_members_detail(attribute="email")
     return jsonify(new_member_list)
   except jots.pyauth.group.GroupActionError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
   except jots.pyauth.group.InputError as err:
-    raise error_handlers.InvalidUsage(err.message, status_code=400)
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)

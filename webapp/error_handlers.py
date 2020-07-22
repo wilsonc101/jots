@@ -1,16 +1,12 @@
-from flask import make_response, redirect, jsonify, render_template, request, url_for
+from flask import make_response, redirect, jsonify, render_template, request, url_for, Response
 
 from jots.webapp import app, jwt
 
 class InvalidUsage(Exception):
-  status_code = 400
-  def __init__(self, message, status_code=None, payload=None):
+  def __init__(self, message, status_code=400, payload=None):
     Exception.__init__(self)
     self.message = message
-
-    if status_code is not None:
-        self.status_code = status_code
-
+    self.status_code = status_code
     self.payload = payload
 
   def to_dict(self):
@@ -26,6 +22,28 @@ def handle_invalid_usage(error):
                          error_code=error.status_code,
                          error_data=error.payload), int(error.status_code)
 
+
+class InvalidAPIUsage(Exception):
+  def __init__(self, message, status_code=400, payload=None):
+    Exception.__init__(self)
+    self.message = message
+    self.status_code = status_code
+    self.payload = payload
+
+  def to_dict(self):
+    rv = dict(self.payload or ())
+    rv['message'] = self.message
+    return rv
+
+
+@app.errorhandler(InvalidAPIUsage)
+def handle_invalid_api_usage(error):
+  response = make_response(jsonify({'errorMessage': error.message,
+                                    'errorData': error.payload,
+                                    'errorCode': error.status_code}),
+                           error.status_code)
+  response.headers['Content-Type'] = "application/json"
+  return response
 
 @jwt.expired_token_loader
 def expired_token_callback(token):
