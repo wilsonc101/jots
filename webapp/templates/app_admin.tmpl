@@ -5,7 +5,7 @@
 </head>
 
 <body>
-  <a href="https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/logout">Logout</a>
+  <a href="{{ protocol }}://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/logout">Logout</a>
   <div class="container">
     <div class="pt-2 tab-pane" id="resultstab">
       <div class="row">
@@ -159,7 +159,7 @@
       var app_name = $("#search-appname").val();
       $("#results-table").empty()
       var check_result = $.ajax({
-              url: "https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/apps/find",
+              url: "{{ protocol }}://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/apps/find",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",
@@ -200,7 +200,7 @@
       var app_id = $(button).data("appid");
 
       var check_result = $.ajax({
-              url: "https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/apps/delete",
+              url: "{{ protocol }}://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/apps/delete",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",
@@ -228,7 +228,7 @@
     $("#appcreate-add-btn").click(function(){
       var app_name = $("#appcreate-name").val();
       var check_result = $.ajax({
-              url: "https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/apps/new",
+              url: "{{ protocol }}://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/apps/new",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",
@@ -271,7 +271,7 @@
       var app_id = e.relatedTarget.dataset.appid;
 
       var check_result = $.ajax({
-              url: "https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/apps/" + app_id  + "/key",
+              url: "{{ protocol }}://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/apps/" + app_id  + "/key",
               type: "GET",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               success: function (result){

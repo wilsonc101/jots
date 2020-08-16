@@ -5,7 +5,7 @@
 </head>
 
 <body>
-  <a href="https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/logout">Logout</a><br>
+  <a href="{{ protocol }}://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/logout">Logout</a><br>
   <br>
   <p>This is a protected page</p>
   {% for group in groups %}
@@ -20,7 +20,7 @@
   <script>
     $(document).ready(function(){
       // GET PROCESSORS
-      $.ajax({url: "https://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api",
+      $.ajax({url: "{{ protocol }}://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api",
               type: "GET",
               success: function (result){      
                 console.log("ok");

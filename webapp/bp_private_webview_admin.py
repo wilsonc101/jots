@@ -58,7 +58,8 @@ def protected_view(func):
 def page_admin_group():
   return render_template("group_admin.tmpl",
                          api_url=app.config['DOMAIN_NAME'],
-                         server_port=app.config['SERVER_PORT'])
+                         server_port=app.config['SERVER_PORT'],
+                         protocol=app.config['SERVER_PROTOCOL'])
 
 
 @web_private_admin.route('/users')
@@ -67,7 +68,8 @@ def page_admin_group():
 def page_admin_user():
   return render_template("user_admin.tmpl",
                          api_url=app.config['DOMAIN_NAME'],
-                         server_port=app.config['SERVER_PORT'])
+                         server_port=app.config['SERVER_PORT'],
+                         protocol=app.config['SERVER_PROTOCOL'])
 
 
 @web_private_admin.route('/apps')
@@ -76,5 +78,6 @@ def page_admin_user():
 def page_admin_app():
   return render_template("app_admin.tmpl",
                          api_url=app.config['DOMAIN_NAME'],
-                         server_port=app.config['SERVER_PORT'])
+                         server_port=app.config['SERVER_PORT'],
+                         protocol=app.config['SERVER_PROTOCOL'])
 

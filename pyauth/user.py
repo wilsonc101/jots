@@ -70,7 +70,6 @@ class user(object):
       raise InputError("get user", "one unique identifier must be provided - email, userid")
 
     if email_address is not None:
-      _check_user_string(email_address)
       _check_email(email_address)
 
       user_details = self.db.get_user_by_email(email_address)

@@ -22,7 +22,8 @@ def index():
   if get_jwt_identity() is None:
     return render_template("login.tmpl",
                            api_url=app.config['DOMAIN_NAME'],
-                           server_port=app.config['SERVER_PORT'])
+                           server_port=app.config['SERVER_PORT'],
+                           protocol=app.config['SERVER_PROTOCOL'])
 
   else:
     return make_response(redirect("/page"))

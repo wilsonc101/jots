@@ -87,6 +87,7 @@ def page():
   return render_template("page.tmpl",
                          api_url=app.config['DOMAIN_NAME'],
                          server_port=app.config['SERVER_PORT'],
+                         protocol=app.config['SERVER_PROTOCOL'],
                          groups=group_links)
 
 

@@ -85,6 +85,8 @@ def api_newuser():
     raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   email = html.escape(request_content['email'])
+  if len(email) < 5:
+    raise error_handlers.InvalidAPIUsage("bad email address", status_code=400)
 
   # This should be the start of a verification process, short-circuit for now
   try:
@@ -133,6 +135,8 @@ def api_passwordreset():
     raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
   email = html.escape(request_content['email'])
+  if len(email) < 5:
+    raise error_handlers.InvalidAPIUsage("bad email address", status_code=400)
 
   try:
     user = jots.pyauth.user.user(email_address=email, db=DB_CON)
@@ -247,8 +251,8 @@ def api_set_user_attribute(user_id, user_attribute):
   except jots.pyauth.user.InputError as err:
     raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
-  # Changing to reset status should trigger a password reset
-  # Otherwise, use attribute change method
+  # If changing status to reset, we should trigger a password reset
+  # Else use attribute change method
   if user_attribute == "status" and attribute_value == "reset":
     try:
       reset_code = user.reset_password(service_domain=app.config['DOMAIN_NAME'])
@@ -257,12 +261,14 @@ def api_set_user_attribute(user_id, user_attribute):
     except jots.pyauth.user.InputError as err:
       raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
-    # The next step is to email a link to the 'reset' page with a query string (q) containing reset code
+    # Wmail a link to the 'reset' page with a query string (q) containing reset code
     try:
       email_obj = mailer.personalised_email(recipient=user.properties.email,
                                             template_name="reset",
                                             data={"site_name": app.config['DOMAIN_NAME'],
-                                                  "reset_url": "https://{}:5000/reset?q={}".format(app.config['DOMAIN_NAME'], reset_code)})
+                                                  "reset_url": "https://{}:{}/reset?q={}".format(app.config['DOMAIN_NAME'],
+                                                                                                 app.config['SERVER_PORT'],
+                                                                                                 reset_code)})
       if app.config['TESTING']:
         email_obj.send(mail_agent="file")
       else:
