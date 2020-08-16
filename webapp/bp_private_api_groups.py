@@ -73,6 +73,10 @@ def protected_view(func):
 @jwt_required
 @protected_view
 def api_findgroups():
+  ''' Search for groups based on either group name or a user ID
+      The two use different methods wihin the group moduel
+      but should result in the same output
+  '''
   # Allow the use of a mock DB during testing
   if app.config['TESTING']:
     DB_CON = app.config['TEST_DB']
@@ -84,17 +88,30 @@ def api_findgroups():
     raise error_handlers.InvalidAPIUsage("bad payload format", status_code=400)
 
   request_content = request.get_json()
-  if 'groupname' not in request_content:
+  # Search by group name
+  if 'groupname' in request_content:
+    groupname = html.escape(request_content['groupname'])
+
+    try:
+      response = jots.pyauth.group.find_groups_like(groupname, db=DB_CON)
+      return jsonify(response)
+
+    except jots.pyauth.group.GroupNotFound:
+      return jsonify(dict())
+
+  # Search for group by member user id
+  elif 'userid' in request_content:
+    userid = html.escape(request_content['userid'])
+
+    try:
+      response = jots.pyauth.group.find_user_in_group(userid, db=DB_CON)
+      return jsonify(response)
+
+    except jots.pyauth.group.GroupNotFound:
+      return jsonify(dict())
+
+  else:
     raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
-
-  groupname = html.escape(request_content['groupname'])
-
-  try:
-    response = jots.pyauth.group.find_groups_like(groupname, db=DB_CON)
-    return jsonify(response)
-
-  except jots.pyauth.group.GroupNotFound:
-    return jsonify(dict())
 
 
 @api_groups.route('/new', methods=['POST'])

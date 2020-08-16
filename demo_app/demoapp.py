@@ -12,6 +12,9 @@ from flask_jwt_extended import (
 
 SECRET = os.environ.get("JWTSECRET")
 ISSUER = os.environ.get("JWTISSUER")
+LOGIN_URL = "http://dev.localhost:5000/" # This should be an envvar
+REFRESH_URL = "http://dev.localhost:5000/token/refresh" # This should be an envvar  
+
 BASE_URL = ISSUER # This shoud be a seperate envvar
 SERVER_PORT = 5000 # Default port
 
@@ -22,12 +25,12 @@ app.config['JWT_SECRET_KEY'] = SECRET
 app.config['JWT_COOKIE_DOMAIN'] = ISSUER
 app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
-app.config['JWT_COOKIE_SECURE'] = True
+app.config['JWT_COOKIE_SECURE'] = False # THIS MUST BE TRUE WHEN IN PROD
 app.config['JWT_COOKIE_SAMESITE'] = "lax"
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 30
-app.config['JWT_LOGIN_URL'] = "https://dev.localhost:5000/"
-app.config['JWT_REFRESH_URL'] = "https://dev.localhost:5000/token/refresh"
+app.config['JWT_LOGIN_URL'] = LOGIN_URL
+app.config['JWT_REFRESH_URL'] = REFRESH_URL
 
 
 jwt = JWTManager(app)
@@ -90,8 +93,8 @@ if __name__ == "__main__":
   app.config['SERVER_PORT'] = args.port
   app.run(host='0.0.0.0',
           port=args.port,
-          debug=True,
-          ssl_context='adhoc')
+          debug=True)
+#          ssl_context='adhoc')
 
 
 
