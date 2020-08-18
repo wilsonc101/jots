@@ -87,13 +87,17 @@ class Client(object):
     else:
       print("this is bad, raise an error")
 
-
+  # User functions
   def find_users_by_email(self, query):
+    # API returns a dict. Converted to tuple for easier iteration
     url = "{}/api/v1/users/find".format(self.api_root)
-    query_data = {"email": query}
-    response = self._api_post(url, json_data=query_data)
-    return response.json()
-
+    user_query_data = {"email": query}
+    response = self._api_post(url, json_data=user_query_data)
+    json_data = response.json()
+    users = list()
+    for email in json_data:
+      users.append((json_data[email], email))
+    return users
 
   def get_user_details(self, userId):
     url = "{}/api/v1/users/{}/details".format(self.api_root, userId)
@@ -102,10 +106,64 @@ class Client(object):
 
 
   def get_user_groups(self, userId):
+    # API returns a dict. Converted to tuple for easier iteration
     url = "{}/api/v1/groups/find".format(self.api_root)
     query_data = {"userid": userId}
     response = self._api_post(url, json_data=query_data)
+    json_data = response.json()
+    groups = list()
+    for group_name in json_data:
+      groups.append((json_data[group_name], group_name))
+    return groups
+
+
+  def update_user_attribute(self, userId, attribute, value, return_new_value=True):
+    ''' Returns either new value or original value as string
+    '''
+    url = "{}/api/v1/users/{}/set/{}".format(self.api_root, userId, attribute)
+    attribute_data = {"value": value}
+    response = self._api_post(url, json_data=attribute_data)
+    if return_new_value:
+      return response.json()['new_value']
+    else:
+      return value
+
+  def reset_user_password(self, email):
+    url = "{}/api/v1/users/reset".format(self.api_root)
+    reset_data = {"email": email}
+    response = self._api_post(url, json_data=reset_data)
     return response.json()
+
+
+  def delete_user(self, userId):
+    url = "{}/api/v1/users/delete".format(self.api_root)
+    delete_data = {"usersid": userId}
+    response = self._api_post(url, json_data=delete_data)
+    return response.json()
+
+
+  # Group functions
+  def find_groups(self, query):
+    # API returns a dict. Converted to tuple for easier iteration
+    url = "{}/api/v1/groups/find".format(self.api_root)
+    group_query_data = {"groupname": query}
+    response = self._api_post(url, json_data=group_query_data)
+    json_data = response.json()
+    groups = list()
+    for group_name in json_data:
+      groups.append((json_data[group_name], group_name))
+    return groups
+
+
+  def get_group_members(self, groupId):
+    # API returns a dict. Converted to tuple for easier iteration
+    url = "{}/api/v1/groups/{}/members".format(self.api_root, groupId)
+    response = self._api_get(url)
+    json_data = response.json()
+    members = list()
+    for user_id in json_data:
+      members.append((user_id, json_data[user_id]))
+    return members
 
 
 
@@ -123,6 +181,16 @@ if __name__ == "__main__":
   print("----------------------------")
   print(client.get_user_groups(user_id))
 
+  print("----------------------------")
+  print(client.update_user_attribute(user_id, "resetExpiry", ""))
 
+#  print("----------------------------")
+#  print(client.reset_user_password("a@b.com"))
 
+  print("----------------------------")
+  print(client.find_groups("?"))
+
+  print("----------------------------")
+  group_id = "6e14ba51-447a-4e5b-a62d-27203c89c0a1"
+  print(client.get_group_members(group_id))
 
