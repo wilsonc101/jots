@@ -9,7 +9,7 @@ from flask_jwt_extended import (
     JWTManager, jwt_required, jwt_optional, jwt_refresh_token_required,
     create_refresh_token, create_access_token,
     set_access_cookies, set_refresh_cookies, unset_jwt_cookies,
-    get_jwt_identity, verify_jwt_in_request
+    get_jwt_identity, verify_jwt_in_request, get_jwt_claims
 )
 
 from jots.webapp import app
@@ -182,6 +182,7 @@ def api_findusers():
     DB_CON = app.config['TEST_DB']
   else:
     DB_CON = None
+
 
   # Reject non-JSON payload
   if not request.json:

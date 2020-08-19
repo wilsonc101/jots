@@ -68,7 +68,15 @@
             <div class="col-md">
               <div class="input-group">
                 <input type="text" class="form-control mr-2" id="appcreate-name">
-                <button class="btn btn-primary mb-2" id="appcreate-add-btn">Add</button>
+              </div>
+              <div class="input-group">
+                <div class="form-check form-check-inline mt-2">
+                  <input class="form-check-input" type="checkbox" id="appcreate-write">
+                  <label class="form-check-label" for="appcreate-write">Enable Write/Update Access</label>
+                </div>
+              </div>
+              <div class="input-group">
+                <button class="btn btn-primary mt-2 mb-2" id="appcreate-add-btn">Add</button>
               </div>
             </div>
           </div>
@@ -118,13 +126,13 @@
     </div>
   </div>
 
-  <!-- App Key Modal -->
-  <div id="modal-appkey" class="modal" tabindex="-1" role="dialog">
+  <!-- App Details Modal -->
+  <div id="modal-appdetails" class="modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
 
         <div class="modal-header">
-          <h5 class="modal-title">App Key</h5>
+          <h5 class="modal-title">App Details</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -133,8 +141,15 @@
         <div class="modal-body">
           <div class="row">
             <div class="col-md">
-              <div class="input-group">
-                <input readonly type="text" class="form-control mr-2" id="app-key">
+              <label for="app-key">Key</label>
+              <div class="input-group mr-2">
+                <input readonly type="text" class="form-control" id="app-key">
+              </div>
+              <div class="input-group mr-2">
+                <div class="form-check form-check-inline mt-2">
+                  <input disabled class="form-check-input" type="checkbox" id="app-attr-write">
+                  <label class="form-check-label" for="appdetails-write">Write/Update Access</label>
+                </div>
               </div>
             </div>
           </div>
@@ -170,7 +185,7 @@
                   if (result.hasOwnProperty(key)) {           
                     $("#results-table").append('<tr class="table-light" id="' + result[key] +'">' + 
                       '<td>' + key + '</td>' + 
-                      '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-appkey" data-appid="' + result[key] + '">Show Key</button>' +
+                      '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-appdetails" data-appid="' + result[key] + '">Details</button>' +
                       '<button class="btn btn-sm btn-outline-danger mr-2" onclick="delete_app(this);" data-appid="' + result[key] + '">Delete</button>' +
                       '</td></tr>')
                   }
@@ -227,19 +242,21 @@
 
     $("#appcreate-add-btn").click(function(){
       var app_name = $("#appcreate-name").val();
+      var app_write = $("#appcreate-write").prop("checked");
       var check_result = $.ajax({
               url: "{{ protocol }}://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/apps/new",
               type: "POST",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               contentType:"application/json; charset=utf-8",
               dataType:"json",
-              data: JSON.stringify({"appname": app_name}),
+              data: JSON.stringify({"appname": app_name,
+                                    "writeenabled": app_write}),
               success: function (result){
                 for (var key in result) {
                   if (result.hasOwnProperty(key)) {
                     $("#results-table").append('<tr class="table-light" id="' + result[key]['id'] +'">' + 
                       '<td>' + key + '</td>' + 
-                      '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-appkey" data-appid="' + result[key]['id'] + '">Show Key</button>' +
+                      '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-appdetails" data-appid="' + result[key]['id'] + '">Show Key</button>' +
                       '<button class="btn btn-sm btn-outline-danger mr-2" onclick="delete_app(this);" data-appid="' + result[key]['id'] + '">Delete</button>' +
                       '</td></tr>')
                     $("#newapp-name").val(key);
@@ -267,15 +284,17 @@
     })
 
 
-    $('#modal-appkey').on('show.bs.modal', function(e) {
+    $('#modal-appdetails').on('show.bs.modal', function(e) {
       var app_id = e.relatedTarget.dataset.appid;
 
       var check_result = $.ajax({
-              url: "{{ protocol }}://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/apps/" + app_id  + "/key",
+              url: "{{ protocol }}://{{ api_url }}{% if server_port %}:{{ server_port }}{% endif %}/api/v1/apps/" + app_id  + "/details",
               type: "GET",
               headers: {'X-CSRF-TOKEN': getCookie('csrf_access_token')},
               success: function (result){
-                $("#app-key").val(result);
+                console.log(result);
+                $("#app-key").val(result.key);
+                $("#app-attr-write").prop('checked', $.parseJSON(result.attributes.writeEnabled.toLowerCase()));
               },
               error: function (result){
                 $("#page-alerts").empty()
@@ -292,8 +311,9 @@
     })
 
 
-    $('#modal-appkey').on('hidden.bs.modal', function(e) {
+    $('#modal-appdetails').on('hidden.bs.modal', function(e) {
       $("#app-key").val("");
+      $("#app-attr-write").prop('checked', false);
     })
 
 

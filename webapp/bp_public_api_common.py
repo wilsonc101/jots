@@ -162,7 +162,9 @@ def token_get():
 
   if app_obj.authenticate(secret):
     expires = datetime.timedelta(days=30)
-    access_token = create_access_token(identity=app_obj.properties.appName, expires_delta=expires)
+    access_token = create_access_token(identity=app_obj.properties.appName,
+                                       expires_delta=expires,
+                                       user_claims={"appId": app_obj.properties.appId})
     return access_token
   else:
     raise error_handlers.InvalidAPIUsage("permission denied", status_code=403)

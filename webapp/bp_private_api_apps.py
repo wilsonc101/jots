@@ -114,9 +114,15 @@ def api_newapp():
   if 'appname' not in request_content:
     raise error_handlers.InvalidAPIUsage("bad payload", status_code=400)
 
+  # Default to read-only apps
+  app_attributes = {"writeEnabled": "False"}
+  if 'writeenabled' in request_content:
+    if request_content['writeenabled'] is True:
+      app_attributes['writeEnabled'] = "True"
+
   app_name = html.escape(request_content['appname'])
   try:
-    app_id, app_key, app_secret = jots.pyauth.app.create_app(app_name, db=DB_CON)
+    app_id, app_key, app_secret = jots.pyauth.app.create_app(app_name, attributes=app_attributes, db=DB_CON)
     return jsonify({app_name: {"id": app_id, "key": app_key, "secret": app_secret}})
   except jots.pyauth.app.AppActionError as err:
     raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
@@ -169,3 +175,24 @@ def api_get_appkey(app_id):
     raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 
   return app_object.properties.key
+
+
+@api_apps.route('/<app_id>/details')
+@jwt_required
+@protected_view
+def api_get_appdetails(app_id):
+  # Allow the use of a mock DB during testing
+  if app.config['TESTING']:
+    DB_CON = app.config['TEST_DB']
+  else:
+    DB_CON = None
+
+  app_id = html.escape(app_id)
+  try:
+    app_object = jots.pyauth.app.app(app_id=app_id, db=DB_CON)
+  except jots.pyauth.app.InputError as err:
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
+  except jots.pyauth.app.AppNotFound as err:
+    raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
+
+  return app_object.properties.as_dict()
