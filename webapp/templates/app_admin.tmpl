@@ -256,7 +256,7 @@
                   if (result.hasOwnProperty(key)) {
                     $("#results-table").append('<tr class="table-light" id="' + result[key]['id'] +'">' + 
                       '<td>' + key + '</td>' + 
-                      '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-appdetails" data-appid="' + result[key]['id'] + '">Show Key</button>' +
+                      '<td><button class="btn btn-sm btn-outline-primary mr-2" data-toggle="modal" data-target="#modal-appdetails" data-appid="' + result[key]['id'] + '">Details</button>' +
                       '<button class="btn btn-sm btn-outline-danger mr-2" onclick="delete_app(this);" data-appid="' + result[key]['id'] + '">Delete</button>' +
                       '</td></tr>')
                     $("#newapp-name").val(key);

@@ -5,8 +5,16 @@ import requests
 API_HOST = "http://dev.localhost"
 API_PORT = 5000
 
-APP_KEY = "09mea37ii8er2qlyhxo4ee66hhm34zsw"
-APP_SECRET = "QQf7tGK1GTRT82Usz3vbwLYOSPh1ct8OsRY7rgOYI02jMFRS0GePSQlCTFwi1nCX"
+# Read Only
+APP_KEY = "21fpdyn2xszhf7xaljrbts8aqb5q7j98"
+APP_SECRET = "Siz1mf9klwAidxERyeGFxy3BF8sFuvxEjFRCjxbSjh7QAZwSQP2GLhHC0pmFVaxH"
+
+# Read/Write
+#APP_KEY = "zcvgxq1ixu6adznjxqn3yrlm8fxh2awb"
+#APP_SECRET = "MrygqxFmQQtkNIQCyaSICpuBT6IAxS1tHHVAdsW2y2vsWYf2YzxhG6o6T1rHnpaw"
+
+
+
 
 class Error(Exception):
   pass
