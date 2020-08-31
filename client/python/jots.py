@@ -1,19 +1,25 @@
+import os
 import requests
+
+
+API_HOST = os.environ.get("JOTS_API_HOST")
+API_PORT = os.environ.get("JOTS_API_PORT")
+APP_KEY = os.environ.get("JOTS_API_KEY")
+APP_SECRET = os.environ.get("JOTS_API_SECRET")
+
 
 # Get config from env vars
 # These should all be env vars
-API_HOST = "http://dev.localhost"
-API_PORT = 5000
+#API_HOST = "http://dev.localhost"
+#API_PORT = 5000
 
 # Read Only
-APP_KEY = "21fpdyn2xszhf7xaljrbts8aqb5q7j98"
-APP_SECRET = "Siz1mf9klwAidxERyeGFxy3BF8sFuvxEjFRCjxbSjh7QAZwSQP2GLhHC0pmFVaxH"
+#APP_KEY = "21fpdyn2xszhf7xaljrbts8aqb5q7j98"
+#APP_SECRET = "Siz1mf9klwAidxERyeGFxy3BF8sFuvxEjFRCjxbSjh7QAZwSQP2GLhHC0pmFVaxH"
 
 # Read/Write
 #APP_KEY = "zcvgxq1ixu6adznjxqn3yrlm8fxh2awb"
 #APP_SECRET = "MrygqxFmQQtkNIQCyaSICpuBT6IAxS1tHHVAdsW2y2vsWYf2YzxhG6o6T1rHnpaw"
-
-
 
 
 class Error(Exception):

@@ -1,4 +1,5 @@
 from functools import wraps
+from distutils.util import strtobool
 
 from flask import g
 from flask_jwt_extended import get_jwt_identity

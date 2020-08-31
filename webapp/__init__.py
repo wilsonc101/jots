@@ -4,7 +4,8 @@ from flask import Flask
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 
-SECRET = os.environ.get("JWTSECRET")
+PUB_KEY = os.environ.get("JWTPUBKEY")
+PRIV_KEY = os.environ.get("JWTPRIVKEY")
 ISSUER = os.environ.get("JWTISSUER")
 BASE_URL = ISSUER # This shoud be a seperate envvar
 SERVER_PORT = 5000 # Default server port
@@ -14,7 +15,11 @@ app = Flask(__name__)
 app.config['SERVER_PORT'] = SERVER_PORT
 app.config['SERVER_PROTOCOL'] = SERVER_PROTOCOL
 app.config['DOMAIN_NAME'] = BASE_URL
-app.config['JWT_SECRET_KEY'] = SECRET
+
+app.config['JWT_PUBLIC_KEY'] = PUB_KEY
+app.config['JWT_PRIVATE_KEY'] = PRIV_KEY
+app.config['JWT_ALGORITHM'] = "RS512"
+
 app.config['JWT_COOKIE_DOMAIN'] = ISSUER
 app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/'

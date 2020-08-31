@@ -3,7 +3,6 @@ import sys
 import datetime
 
 from functools import wraps
-from distutils.util import strtobool
 
 from flask import Flask, request, render_template, jsonify, make_response, redirect, Blueprint, g
 from flask_jwt_extended import (

@@ -28,3 +28,4 @@ wcwidth==0.2.3
 webencodings==0.5.1
 Werkzeug==1.0.1
 zipp==3.1.0
+flask-jwt-extended[asymmetric_crypto]==2.20
