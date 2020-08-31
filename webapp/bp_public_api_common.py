@@ -156,7 +156,7 @@ def token_get():
   try:
     app_obj = jots.pyauth.app.app(app_key=key, db=DB_CON)
   except jots.pyauth.app.AppNotFound:
-    raise error_handlers.InvalidAPIUsage("bad app", status_code=400)
+    raise error_handlers.InvalidAPIUsage("forbidden - bad app", status_code=403)
   except jots.pyauth.app.InputError as err:
     raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
 

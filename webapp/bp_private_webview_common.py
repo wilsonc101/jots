@@ -73,7 +73,7 @@ def refresh_get():
 
   # Check that refresh token given matches what is stored
   if current_refresh_jti != user.properties.refreshJti:
-    return redirect(url_for('logout', request_path=request.path))
+    return redirect(url_for('public_webview_common.logout', request_path=request.path))
 
   access_token = create_access_token(identity=current_user)
 
