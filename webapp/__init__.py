@@ -11,6 +11,25 @@ BASE_URL = ISSUER # This shoud be a seperate envvar
 SERVER_PORT = 5000 # Default server port
 SERVER_PROTOCOL = "http" # This should be an env var, used when rendering templates
 
+
+# If keys aren't passed in as env.vars, see if they are files
+if PUB_KEY is None:
+  try:
+    with open("public.key", "r") as public_key:
+      PUB_KEY = public_key.read()
+
+  except FileNotFoundError:
+    raise Exception("No public key provided, cannot run")
+
+if PRIV_KEY is None:
+  try:
+    with open("private.key", "r") as private_key:
+      PRIV_KEY = private_key.read()
+
+  except FileNotFoundError:
+    raise Exception("No private key provided, cannot run")
+
+
 app = Flask(__name__)
 app.config['SERVER_PORT'] = SERVER_PORT
 app.config['SERVER_PROTOCOL'] = SERVER_PROTOCOL

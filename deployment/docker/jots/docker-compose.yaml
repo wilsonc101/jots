@@ -4,12 +4,14 @@ services:
     image: 'jots:0.1'
     container_name: 'jots_webapp'
     environment:
-      - JWTSECRET=password
       - JWTISSUER=dev.localhost
       - MONGOHOST=192.168.1.77
       - MONGOUSER=pyauthadmin
       - MONGOPASSWORD=password
     ports:
       - '5000:5000'
+    volumes:
+      - ./private.key:/private.key:ro
+      - ./public.key:/public.key:ro
 
     

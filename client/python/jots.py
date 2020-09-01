@@ -8,20 +8,6 @@ APP_KEY = os.environ.get("JOTS_API_KEY")
 APP_SECRET = os.environ.get("JOTS_API_SECRET")
 
 
-# Get config from env vars
-# These should all be env vars
-#API_HOST = "http://dev.localhost"
-#API_PORT = 5000
-
-# Read Only
-#APP_KEY = "21fpdyn2xszhf7xaljrbts8aqb5q7j98"
-#APP_SECRET = "Siz1mf9klwAidxERyeGFxy3BF8sFuvxEjFRCjxbSjh7QAZwSQP2GLhHC0pmFVaxH"
-
-# Read/Write
-#APP_KEY = "zcvgxq1ixu6adznjxqn3yrlm8fxh2awb"
-#APP_SECRET = "MrygqxFmQQtkNIQCyaSICpuBT6IAxS1tHHVAdsW2y2vsWYf2YzxhG6o6T1rHnpaw"
-
-
 class Error(Exception):
   pass
 
@@ -32,6 +18,10 @@ class ConnectionError(Error):
 
 
 class Client(object):
+  def __init__(self):
+    self.api_session = requests.Session()
+
+
   def connect(self, key=None, secret=None,
               api_host=None, api_port=None):
 
@@ -51,8 +41,6 @@ class Client(object):
     self.api_root = "{}:{}".format(self.api_host, self.api_port)
     api_login_url = "{}/token/new".format(self.api_root)
 
-    # This should probably be in the mod init
-    self.api_session = requests.Session()
     try:
       login_request = requests.get(api_login_url, auth=(key, secret))
       login_request.raise_for_status()
@@ -178,33 +166,4 @@ class Client(object):
     for user_id in json_data:
       members.append((user_id, json_data[user_id]))
     return members
-
-
-
-if __name__ == "__main__":
-  client = Client()
-  client.connect()
-
-  user_id = "66c32b98-b057-491c-979d-9032a5d200b8"
-  print(client.get_user_details(user_id))
-
-  print("----------------------------")
-  query = "?@?.?"
-  print(client.find_users_by_email(query))
-
-  print("----------------------------")
-  print(client.get_user_groups(user_id))
-
-  print("----------------------------")
-  print(client.update_user_attribute(user_id, "resetExpiry", ""))
-
-#  print("----------------------------")
-#  print(client.reset_user_password("a@b.com"))
-
-  print("----------------------------")
-  print(client.find_groups("?"))
-
-  print("----------------------------")
-  group_id = "6e14ba51-447a-4e5b-a62d-27203c89c0a1"
-  print(client.get_group_members(group_id))
 
