@@ -4,15 +4,15 @@ import json
 
 from flask_jwt_extended import (create_refresh_token, create_access_token, get_csrf_token)
 
-import jots.webapp
 from jots.pyauth import mongo, user, group
 
 
-def test_get_protected_endpoint(client, example_user, example_user_data, example_group):
+def test_get_protected_endpoint(client, example_user, example_user_data, example_group, monkeypatch):
   ''' Access a restricted page
       1) Get base API response
       2) Get group members, confirm example user is present in result
   '''
+  import jots.webapp
   with client.application.app_context():
     access_token = create_access_token(example_user.properties.email)
 
@@ -32,13 +32,14 @@ def test_get_protected_endpoint(client, example_user, example_user_data, example
   assert example_user.properties.userId in result.json
 
 
-def test_post_protected_endpoint_groups(client, example_user, example_user_data, registered_user, example_group):
+def test_post_protected_endpoint_groups(client, example_user, example_user_data, registered_user, example_group, monkeypatch):
   ''' Access a restricted API endpoint using CSRF token signature
       1) Post groupname and confirm found group matches fixtures
       2) Add group member
       3) Remove group member
       4) Create and delete a new group
   '''
+  import jots.webapp
   with client.application.app_context():
     access_token = create_access_token(example_user.properties.email)
     csrf_code = get_csrf_token(access_token)
@@ -100,11 +101,12 @@ def test_post_protected_endpoint_groups(client, example_user, example_user_data,
   assert "result" in result.json
 
 
-def test_post_protected_endpoint_users(client, example_user, example_user_data, registered_user, example_group):
+def test_post_protected_endpoint_users(client, example_user, example_user_data, registered_user, example_group, monkeypatch):
   ''' Access a restricted API endpoint using CSRF token signature
       1) Find user
       2) Delete user
   '''
+  import jots.webapp
   with client.application.app_context():
     access_token = create_access_token(example_user.properties.email)
     csrf_code = get_csrf_token(access_token)
@@ -135,12 +137,13 @@ def test_post_protected_endpoint_users(client, example_user, example_user_data, 
   assert "result" in result.json
 
 
-def test_post_protected_endpoint_apps(client, example_user, example_user_data, registered_user, example_group):
+def test_post_protected_endpoint_apps(client, example_user, example_user_data, registered_user, example_group, monkeypatch):
   ''' Access a restricted API endpoint using CSRF token signature
       1) Create app
       2) Find app
       3) Get app key
   '''
+  import jots.webapp
   with client.application.app_context():
     access_token = create_access_token(example_user.properties.email)
     csrf_code = get_csrf_token(access_token)

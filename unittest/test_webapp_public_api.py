@@ -4,13 +4,13 @@ import base64
 
 from flask_jwt_extended import (create_refresh_token, create_access_token)
 
-import jots.webapp
 from jots.pyauth import mongo, user, group
 
 
-def test_post_reset_data(client, registered_user, registered_user_data):
+def test_post_reset_data(client, registered_user, registered_user_data, monkeypatch):
   ''' Post reset form details
   '''
+  import jots.webapp
   post_data = {"username": registered_user_data['email_address'],
                "password": registered_user_data['password'],
                "resetcode": registered_user.properties.resetCode}
@@ -22,9 +22,10 @@ def test_post_reset_data(client, registered_user, registered_user_data):
   assert b'Login' in result.data
 
 
-def test_post_login_data(client, example_user, example_user_data):
+def test_post_login_data(client, example_user, example_user_data, monkeypatch):
   ''' Post login form data
   '''
+  import jots.webapp
   post_data = {"username": example_user_data['email_address'],
                "password": example_user_data['password']}
 
@@ -43,11 +44,12 @@ def test_post_login_data(client, example_user, example_user_data):
   assert result.status_code == 403
 
 
-def test_get_app_token(client, example_app, example_user):
+def test_get_app_token(client, example_app, example_user, monkeypatch):
   ''' Test app authentication
       1) Create b64 auth header, use to generate token
       2) Use token to access protected api endpoint
   '''
+  import jots.webapp
   key = example_app['newappZ']['key']
   secret = example_app['newappZ']['secret']
   id = example_app['newappZ']['id']

@@ -3,13 +3,13 @@ import mongomock
 
 from flask_jwt_extended import (create_refresh_token, create_access_token)
 
-import jots.webapp
 from jots.pyauth import mongo, user, group
 
 
-def test_get_protected_page(client, example_user, example_user_data):
+def test_get_protected_page(client, example_user, example_user_data, monkeypatch):
   ''' Access a restricted page
   '''
+  import jots.webapp
   with client.application.app_context():
     access_token = create_access_token(example_user.properties.email)
 
@@ -21,11 +21,12 @@ def test_get_protected_page(client, example_user, example_user_data):
   assert b"This is a protected page" in result.data
 
 
-def test_get_protected_privileged_page(client, example_user, example_user_data, example_group):
+def test_get_protected_privileged_page(client, example_user, example_user_data, example_group, monkeypatch):
   ''' Access a restricted page
       1 & 2) Check that a member of the admin group can access the user and group admin pages
       3 & 4) Remove user from admin group and confim access is denied to priviledged pages
   '''
+  import jots.webapp
   with client.application.app_context():
     access_token = create_access_token(example_user.properties.email)
 

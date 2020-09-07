@@ -3,7 +3,6 @@ import mongomock
 
 from flask_jwt_extended import (create_refresh_token, create_access_token)
 
-import jots.webapp
 from jots.pyauth import mongo, user, group, app
 
 
@@ -97,7 +96,17 @@ def example_app(mongo_object):
 
 
 @pytest.fixture(scope="function")
-def client(mongo_object):
+def client(mongo_object, monkeypatch):
+  with open("public.key", "r") as public_key:
+    monkeypatch.setenv("JWTPUBKEY", public_key.read())
+
+  with open("private.key", "r") as private_key:
+    monkeypatch.setenv("JWTPRIVKEY", private_key.read())
+
+  monkeypatch.setenv("JWTISSUER", "dev.localhost")
+
+  import jots.webapp
+
   with jots.webapp.app.test_client() as client:
     jots.webapp.app.config['TESTING'] = True
     jots.webapp.app.config['TEST_DB'] = mongo_object
