@@ -180,9 +180,6 @@ def api_groupmember_add(group_id):
 
   email = html.escape(request_content['email'])
   try:
-    print("-------------------------------")
-    print(group_id)
-    print("-------------------------------")
     group = jots.pyauth.group.group(group_id=group_id, db=DB_CON)
     new_member_list = group.add_member(email=email)
   except jots.pyauth.group.GroupNotFound as Err:
