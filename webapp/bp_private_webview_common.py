@@ -20,36 +20,6 @@ import jots.pyauth.group
 
 web_private_common = Blueprint('private_webview_common', __name__)
 
-def protected_view(func):
-  ''' Decorator for views only accessible to administryators
-  '''
-  @wraps(func)
-  def wrapper(*args, **kwargs):
-    # Allow the use of a mock DB during testing
-    if app.config['TESTING']:
-      DB_CON = app.config['TEST_DB']
-    else:
-      DB_CON = None
-
-    username = get_jwt_identity()
-    try:
-      user = jots.pyauth.user.user(email_address=username, db=DB_CON)
-    except jots.pyauth.user.UserNotFound:
-      raise error_handlers.InvalidUsage("access denied", status_code=403)
-    except jots.pyauth.user.InputError:
-      raise error_handlers.InvalidUsage("access denied", status_code=403)
-
-    try:
-      group = jots.pyauth.group.group(group_name="admin", db=DB_CON)
-    except jots.pyauth.group.GroupNotFound:
-      raise error_handlers.InvalidUsage("group not found", status_code=400)
-
-    if user.properties.userId not in group.properties.members:
-      raise error_handlers.InvalidUsage("access denied", status_code=403)
-
-    return func(*args, **kwargs)
-  return wrapper
-
 
 @web_private_common.route('/token/refresh')
 @jwt_refresh_token_required

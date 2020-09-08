@@ -92,7 +92,7 @@ class Client(object):
       except requests.exceptions.ConnectionError as err:
         raise ConnectionError("api put connection error", err)
       except requests.exceptions.Timeout:
-        raise ConnectionError("api put timeout", err)
+        raise ConnectionError("api put timeout")
 
     elif string_data is not None:
       pass
