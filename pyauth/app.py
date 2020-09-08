@@ -118,7 +118,7 @@ def _check_user_string(user_string, is_uuid=False):
     try:
       uuid.UUID(user_string)
     except ValueError:
-      raise InputError("group", "invalid user id given")
+      raise InputError("check", "invalid id")
 
   return True
 
@@ -183,7 +183,7 @@ def find_apps_like(app_name, db=None):
     db = mongo.mongo()
 
   if not app_name:
-    raise InputError("app", "app name required")
+    raise InputError("find app", "app name required")
 
   _check_user_string(app_name)
 

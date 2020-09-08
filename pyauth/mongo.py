@@ -102,7 +102,7 @@ class mongo(object):
     documents = list(documents)
 
     if len(documents) > 1:
-      raise RecordError("get_users", "to many records returned")
+      raise RecordError("get user", "to many records returned")
 
     elif len(documents) == 0:
       return None
@@ -115,7 +115,7 @@ class mongo(object):
     documents = list(documents)
 
     if len(documents) > 1:
-      raise RecordError("get_users", "to many records returned")
+      raise RecordError("get user", "to many records returned")
 
     elif len(documents) == 0:
       return None
@@ -128,7 +128,7 @@ class mongo(object):
     documents = list(documents)
 
     if len(documents) > 1:
-      raise RecordError("get_users_for_reset", "to many records returned")
+      raise RecordError("user reset", "to many records returned")
 
     elif len(documents) == 0:
       return None
@@ -177,7 +177,7 @@ class mongo(object):
     documents = list(documents)
 
     if len(documents) > 1:
-      raise RecordError("get_group", "to many records returned")
+      raise RecordError("get group", "to many records returned")
 
     elif len(documents) == 0:
       return None
@@ -190,7 +190,7 @@ class mongo(object):
     documents = list(documents)
 
     if len(documents) > 1:
-      raise RecordError("get_group", "to many records returned")
+      raise RecordError("get group", "to many records returned")
 
     elif len(documents) == 0:
       return None

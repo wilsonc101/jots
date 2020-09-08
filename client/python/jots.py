@@ -7,9 +7,13 @@ API_PORT = os.environ.get("JOTS_API_PORT")
 APP_KEY = os.environ.get("JOTS_API_KEY")
 APP_SECRET = os.environ.get("JOTS_API_SECRET")
 
-
 class Error(Exception):
   pass
+
+class InputError(Error):
+  def __init__(self, expression, message):
+    self.expression = expression
+    self.message = message
 
 class ConnectionError(Error):
   def __init__(self, expression, message):
@@ -34,9 +38,16 @@ class Client(object):
 
     if api_host is None:
       self.api_host = API_HOST
+    else:
+      self.api_host = api_host
 
     if api_port is None:
       self.api_port = API_PORT
+    else:
+      self.api_port = api_port
+
+    if "http:" not in self.api_host and "https:" not in self.api_host:
+      raise InputError("connect", "api host must contain protcol scheme")
 
     self.api_root = "{}:{}".format(self.api_host, self.api_port)
     api_login_url = "{}/token/new".format(self.api_root)
@@ -166,4 +177,3 @@ class Client(object):
     for user_id in json_data:
       members.append((user_id, json_data[user_id]))
     return members
-

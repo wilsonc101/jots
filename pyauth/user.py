@@ -208,7 +208,7 @@ class user(object):
 
 def _check_email(email_address):
   if "@" not in email_address or "." not in email_address:
-    raise InputError("check_email", "invalid email address")
+    raise InputError("check", "invalid email address")
     # if email contains illegal chars, raise error
 
 
@@ -223,7 +223,7 @@ def _check_user_string(user_string, is_uuid=False):
     try:
       uuid.UUID(user_string)
     except ValueError:
-      raise InputError("group", "invalid user id given")
+      raise InputError("check", "invalid id")
 
   return True
 
@@ -267,10 +267,10 @@ def create_user(service_domain,
     db = mongo.mongo()
 
   if not email_address:
-    raise InputError("create_user", "email address required")
+    raise InputError("create user", "email address required")
 
   if not service_domain:
-    raise InputError("create_user", "domain required")
+    raise InputError("create user", "domain required")
 
   _check_user_string(email_address)
   _check_email(email_address)
@@ -310,7 +310,7 @@ def find_users_like(email_address, db=None):
     db = mongo.mongo()
 
   if not email_address:
-    raise InputError("user", "email address required")
+    raise InputError("find user", "email address required")
 
   _check_email(email_address)
 
