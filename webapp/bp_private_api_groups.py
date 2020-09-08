@@ -180,10 +180,13 @@ def api_groupmember_add(group_id):
 
   email = html.escape(request_content['email'])
   try:
+    print("-------------------------------")
+    print(group_id)
+    print("-------------------------------")
     group = jots.pyauth.group.group(group_id=group_id, db=DB_CON)
     new_member_list = group.add_member(email=email)
-  except jots.pyauth.group.GroupNotFound:
-    raise error_handlers.InvalidAPIUsage("group not found", status_code=400)
+  except jots.pyauth.group.GroupNotFound as Err:
+    raise error_handlers.InvalidAPIUsage("group not found - {}".format(Err), status_code=400)
   except jots.pyauth.group.InputError as err:
     raise error_handlers.InvalidAPIUsage(err.message, status_code=400)
   except jots.pyauth.group.GroupActionError as err:
