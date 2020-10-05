@@ -33,7 +33,7 @@ class GroupNotFound(Error):
     self.message = message
 
 
-class group_properties(object):
+class group_properties:
   ''' Readonly container for group properties
   '''
   def __init__(self, group_doc):

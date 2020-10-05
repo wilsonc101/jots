@@ -39,7 +39,7 @@ class AppNotFound(Error):
     self.message = message
 
 
-class app_properties(object):
+class app_properties:
   ''' Readonly container for app properties
   '''
   def __init__(self, app_doc):

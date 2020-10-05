@@ -38,7 +38,7 @@ class UserNotFound(Error):
     self.message = message
 
 
-class user_properties(object):
+class user_properties:
   ''' Readonly container for user properties
   '''
   def __init__(self, user_doc):
