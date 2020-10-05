@@ -50,7 +50,7 @@ class group_properties(object):
     return attr_as_dict
 
 
-class group(object):
+class group:
   def __init__(self, group_name=None, group_id=None, db=None):
     if db is None:
       # This assumes host and port have been set in envvars

@@ -55,7 +55,7 @@ class user_properties(object):
     return attr_as_dict
 
 
-class user(object):
+class user:
   def __init__(self, email_address=None, user_id=None, db=None):
     ''' Uses supplied detail (email or ID) to find mongo record
         Dynamically populates class properties with mongo document content

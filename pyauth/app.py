@@ -56,7 +56,7 @@ class app_properties(object):
     return attr_as_dict
 
 
-class app(object):
+class app:
   def __init__(self, app_name=None, app_id=None, app_key=None, db=None):
     ''' Uses supplied ID  to find mongo record
         Dynamically populates class properties with mongo document content
